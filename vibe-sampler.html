@@ -25,6 +25,8 @@
       background: rgba(255, 255, 255, 0.4);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid rgba(200, 160, 220, 0.3);
+      position: relative;
+      z-index: 200;
     }
 
     nav a {
@@ -32,6 +34,11 @@
       text-decoration: none;
       font-size: 0.9rem;
       font-weight: 500;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
     }
 
     nav a:hover { color: #7b40a8; text-decoration: underline; }
@@ -73,6 +80,8 @@
 
     #sequencer-container canvas {
       display: block;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
     #click-to-start {
@@ -115,7 +124,7 @@
     }
 
     #click-to-start .start-box .start-btn {
-      padding: 0.6rem 1.5rem;
+      padding: 0.75rem 1.5rem;
       border-radius: 10px;
       border: 2px solid rgba(186, 140, 214, 0.3);
       background: rgba(255, 255, 255, 0.5);
@@ -126,6 +135,9 @@
       font-weight: 700;
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      min-height: 44px;
     }
 
     #click-to-start .start-box .start-btn:hover {
