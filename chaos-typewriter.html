@@ -235,6 +235,8 @@
 
     #sequencer-container canvas {
       display: block;
+      width: 100%;
+      margin: 0 auto;
       border-radius: 12px;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
@@ -345,6 +347,7 @@
     .hint-bubble-wrap {
       flex: 1;
       min-width: 0;
+      height: 3.2rem;
     }
 
     .hint-bubble {
@@ -357,6 +360,8 @@
       padding: 0.5rem 0.8rem;
       position: relative;
       margin-left: 2.6rem;
+      height: 100%;
+      box-sizing: border-box;
     }
 
     .hint-bubble::before {
@@ -401,16 +406,23 @@
       font-size: 0.85rem;
       font-weight: 500;
       line-height: 1.4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .hint-bubble.waiting {
       opacity: 0.7;
+      align-items: center;
     }
 
     .hint-bubble .hint-waiting {
       color: #b07cd8;
-      font-style: italic;
+      font-style: normal;
       font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      height: 100%;
     }
 
     .game-stats {
@@ -670,194 +682,88 @@
 
   <script>
   // ── Audio Engine (Tone.js) — 5 voices per vibe ─────────────────
-  // Scale degrees for 6 rows (row 0 = high, row 5 = low)
-  const SCALES = {
-    lydian:    [11, 9, 6, 4, 2],   // dreamy — 5 rows
-    wholetone: [10, 8, 6, 4, 2],    // glitchy
-    pentminor: [12, 7, 5, 3, 0],    // calm
-    phrygian:  [12, 8, 7, 5, 1],    // tense
-  };
+  // Lydian scale degrees for 20 rows (row 0 = high, row 19 = low), ~2.5 octaves
+  const SCALE = [33,31,30,28,26,24,23,21,19,18,16,14,12,11,9,7,6,4,2,0];
 
-  const VIBES = {
-    glitchy: {
-      label: 'Glitchy', desc: 'Bit-crushed chaos',
-      scale: SCALES.wholetone,
-      voices: [
-        { // block 0 — metallic hits
-          makeSynth(fx) { return new Tone.MetalSynth({ frequency: 200, envelope: { attack: 0.001, decay: 0.15, release: 0.1 }, harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5, volume: -14 }).connect(fx); },
-          makeFx() { const c = new Tone.BitCrusher(4); c.toDestination(); return c; },
-          trigger(synth, freq) { synth.frequency = freq; synth.triggerAttackRelease('16n'); },
-        },
-        { // block 1 — AM glitch
-          makeSynth(fx) { return new Tone.AMSynth({ oscillator: { type: 'square' }, envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.1 }, volume: -16 }).connect(fx); },
-          makeFx() { const d = new Tone.PingPongDelay('8n', 0.3); d.wet.value = 0.2; d.toDestination(); return d; },
-          trigger(synth, freq) { synth.triggerAttackRelease(freq, '16n'); },
-        },
-        { // block 2 — pluck
-          makeSynth(fx) { return new Tone.PluckSynth({ attackNoise: 2, dampening: 2000, resonance: 0.9, volume: -12 }).connect(fx); },
-          makeFx() { const c = new Tone.BitCrusher(6); c.toDestination(); return c; },
-          trigger(synth, freq) { synth.triggerAttack(freq); },
-        },
-        { // block 3 — mono
-          makeSynth(fx) { return new Tone.MonoSynth({ oscillator: { type: 'square' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.1 }, volume: -18 }).connect(fx); },
-          makeFx() { const d = new Tone.Distortion(0.8); d.toDestination(); return d; },
-          trigger(synth, freq) { synth.triggerAttackRelease(freq, '32n'); },
-        },
-        { // block 4 — percussion
-          makeSynth(fx) { return new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.05 }, volume: -14 }).connect(fx); },
-          makeFx() { const r = new Tone.Reverb({ decay: 0.5, wet: 0.15 }); r.toDestination(); return r; },
-          trigger(synth, freq, row) { synth.triggerAttackRelease('32n'); },
-          isDrum: true,
-        },
-      ],
+  // Piano — each block gets its own PolySynth + FX instance
+  function makePianoVoice() {
+    return {
+      makeSynth(fx) { return new Tone.PolySynth(Tone.Synth, { maxPolyphony: 6, oscillator: { type: 'triangle' }, envelope: { attack: 0.005, decay: 0.3, sustain: 0.08, release: 0.8 }, volume: -14 }).connect(fx); },
+      makeFx() { const d = new Tone.FeedbackDelay('8n', 0.12); d.wet.value = 0.15; d.toDestination(); return d; },
+      trigger(synth, freq) { synth.triggerAttackRelease(freq, '8n'); },
+    };
+  }
+  const VOICES = [makePianoVoice(), makePianoVoice(), makePianoVoice(), makePianoVoice(), makePianoVoice()];
+
+  /* — 5-voice variation (commented out) —
+  const VOICES = [
+    { // block 0 — warm pad
+      makeSynth(fx) { return new Tone.FMSynth({ harmonicity: 2, modulationIndex: 3, oscillator: { type: 'sine' }, envelope: { attack: 0.3, decay: 0.5, sustain: 0.4, release: 1.5 }, volume: -18 }).connect(fx); },
+      makeFx() { const d = new Tone.FeedbackDelay('2n', 0.2); d.wet.value = 0.35; d.toDestination(); return d; },
+      trigger(synth, freq) { synth.triggerAttackRelease(freq, '4n'); },
     },
-    calm: {
-      label: 'Calm', desc: 'Soft & warm',
-      scale: SCALES.pentminor,
-      voices: [
-        { // block 0 — soft pad
-          makeSynth(fx) { return new Tone.FMSynth({ harmonicity: 2, modulationIndex: 5, oscillator: { type: 'sine' }, envelope: { attack: 0.2, decay: 0.4, sustain: 0.3, release: 1.2 }, volume: -16 }).connect(fx); },
-          makeFx() { const r = new Tone.Reverb({ decay: 4, wet: 0.6 }); r.toDestination(); return r; },
-          trigger(synth, freq) { synth.triggerAttackRelease(freq, '4n'); },
-        },
-        { // block 1 — bell
-          makeSynth(fx) { return new Tone.FMSynth({ harmonicity: 6, modulationIndex: 2, oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.8, sustain: 0, release: 0.5 }, volume: -18 }).connect(fx); },
-          makeFx() { const d = new Tone.FeedbackDelay('4n', 0.2); d.wet.value = 0.2; d.toDestination(); return d; },
-          trigger(synth, freq) { synth.triggerAttackRelease(freq, '8n'); },
-        },
-        { // block 2 — pluck
-          makeSynth(fx) { return new Tone.PluckSynth({ attackNoise: 0.5, dampening: 3000, resonance: 0.95, volume: -14 }).connect(fx); },
-          makeFx() { const r = new Tone.Reverb({ decay: 3, wet: 0.4 }); r.toDestination(); return r; },
-          trigger(synth, freq) { synth.triggerAttack(freq); },
-        },
-        { // block 3 — keys
-          makeSynth(fx) { return new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.05, decay: 0.3, sustain: 0.1, release: 0.6 }, volume: -16 }).connect(fx); },
-          makeFx() { const d = new Tone.FeedbackDelay('8n', 0.15); d.wet.value = 0.15; d.toDestination(); return d; },
-          trigger(synth, freq) { synth.triggerAttackRelease(freq, '8n'); },
-        },
-        { // block 4 — soft percussion
-          makeSynth(fx) { return new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 4, envelope: { attack: 0.001, decay: 0.3, sustain: 0, release: 0.3 }, volume: -16 }).connect(fx); },
-          makeFx() { const r = new Tone.Reverb({ decay: 2, wet: 0.3 }); r.toDestination(); return r; },
-          trigger(synth, freq, row) { const pitches = ['C5','A4','F4','D4','A3']; synth.triggerAttackRelease(pitches[row] || 'C3', '8n'); },
-          isDrum: true,
-        },
-      ],
+    { // block 1 — bell / chime
+      makeSynth(fx) { return new Tone.FMSynth({ harmonicity: 8, modulationIndex: 1.5, oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 1, sustain: 0, release: 0.8 }, volume: -16 }).connect(fx); },
+      makeFx() { const c = new Tone.Chorus(4, 2.5, 0.5); c.wet.value = 0.4; c.start(); c.toDestination(); return c; },
+      trigger(synth, freq) { synth.triggerAttackRelease(freq, '8n'); },
     },
-    dreamy: {
-      label: 'Dreamy', desc: 'Floaty plucks',
-      scale: SCALES.lydian,
-      voices: [
-        { // block 0 — pad
-          makeSynth(fx) { return new Tone.FMSynth({ harmonicity: 2, modulationIndex: 3, oscillator: { type: 'sine' }, envelope: { attack: 0.3, decay: 0.5, sustain: 0.4, release: 1.5 }, volume: -18 }).connect(fx); },
-          makeFx() { const r = new Tone.Reverb({ decay: 5, wet: 0.6 }); r.toDestination(); return r; },
-          trigger(synth, freq) { synth.triggerAttackRelease(freq, '4n'); },
-        },
-        { // block 1 — bell
-          makeSynth(fx) { return new Tone.FMSynth({ harmonicity: 8, modulationIndex: 1.5, oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 1, sustain: 0, release: 0.8 }, volume: -16 }).connect(fx); },
-          makeFx() { const c = new Tone.Chorus(4, 2.5, 0.5); c.wet.value = 0.4; c.start(); c.toDestination(); return c; },
-          trigger(synth, freq) { synth.triggerAttackRelease(freq, '8n'); },
-        },
-        { // block 2 — pluck
-          makeSynth(fx) { return new Tone.PluckSynth({ attackNoise: 1, dampening: 4000, resonance: 0.95, volume: -10 }).connect(fx); },
-          makeFx() { const r = new Tone.Reverb({ decay: 5, wet: 0.6 }); const c = new Tone.Chorus(4, 2.5, 0.5); c.wet.value = 0.4; c.start(); r.connect(c); c.toDestination(); return r; },
-          trigger(synth, freq) { synth.triggerAttack(freq); },
-        },
-        { // block 3 — keys
-          makeSynth(fx) { return new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.08, decay: 0.4, sustain: 0.1, release: 1 }, volume: -14 }).connect(fx); },
-          makeFx() { const d = new Tone.FeedbackDelay('4n', 0.2); d.wet.value = 0.2; d.toDestination(); return d; },
-          trigger(synth, freq) { synth.triggerAttackRelease(freq, '8n'); },
-        },
-        { // block 4 — dreamy percussion
-          makeSynth(fx) { return new Tone.MembraneSynth({ pitchDecay: 0.08, octaves: 6, envelope: { attack: 0.001, decay: 0.4, sustain: 0, release: 0.4 }, volume: -14 }).connect(fx); },
-          makeFx() { const r = new Tone.Reverb({ decay: 3, wet: 0.5 }); r.toDestination(); return r; },
-          trigger(synth, freq, row) { const pitches = ['C5','G4','E4','C4','G3']; synth.triggerAttackRelease(pitches[row] || 'C3', '8n'); },
-          isDrum: true,
-        },
-      ],
+    { // block 2 — shimmer pluck
+      makeSynth(fx) { return new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.003, decay: 0.3, sustain: 0, release: 0.5 }, volume: -12 }).connect(fx); },
+      makeFx() { const c = new Tone.Chorus(4, 2.5, 0.5); c.wet.value = 0.4; c.start(); const d = new Tone.FeedbackDelay('4n', 0.3); d.wet.value = 0.3; c.connect(d); d.toDestination(); return c; },
+      trigger(synth, freq) { synth.triggerAttackRelease(freq, '8n'); },
     },
-    tense: {
-      label: 'Tense', desc: 'Dark & gritty',
-      scale: SCALES.phrygian,
-      voices: [
-        { // block 0 — dark pad
-          makeSynth(fx) { return new Tone.MonoSynth({ oscillator: { type: 'sawtooth' }, filter: { Q: 4, type: 'lowpass', rolloff: -24 }, envelope: { attack: 0.1, decay: 0.3, sustain: 0.3, release: 0.6 }, volume: -18 }).connect(fx); },
-          makeFx() { const d = new Tone.Distortion(0.3); d.toDestination(); return d; },
-          trigger(synth, freq) { synth.triggerAttackRelease(freq, '8n'); },
-        },
-        { // block 1 — stab
-          makeSynth(fx) { return new Tone.MonoSynth({ oscillator: { type: 'square' }, envelope: { attack: 0.005, decay: 0.15, sustain: 0, release: 0.2 }, volume: -16 }).connect(fx); },
-          makeFx() { const f = new Tone.AutoFilter('2n').start(); f.wet.value = 0.3; f.toDestination(); return f; },
-          trigger(synth, freq) { synth.triggerAttackRelease(freq, '16n'); },
-        },
-        { // block 2 — metallic
-          makeSynth(fx) { return new Tone.MetalSynth({ frequency: 200, envelope: { attack: 0.001, decay: 0.2, release: 0.1 }, harmonicity: 3, modulationIndex: 16, volume: -16 }).connect(fx); },
-          makeFx() { const d = new Tone.Distortion(0.5); d.toDestination(); return d; },
-          trigger(synth, freq) { synth.frequency = freq; synth.triggerAttackRelease('16n'); },
-        },
-        { // block 3 — bass
-          makeSynth(fx) { return new Tone.MonoSynth({ oscillator: { type: 'sawtooth' }, filter: { Q: 6, type: 'lowpass' }, envelope: { attack: 0.005, decay: 0.2, sustain: 0.2, release: 0.4 }, filterEnvelope: { attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.4, baseFrequency: 200, octaves: 4 }, volume: -18 }).connect(fx); },
-          makeFx() { const d = new Tone.Distortion(0.4); d.toDestination(); return d; },
-          trigger(synth, freq) { synth.triggerAttackRelease(freq, '16n'); },
-        },
-        { // block 4 — aggressive percussion
-          makeSynth(fx) { return new Tone.NoiseSynth({ noise: { type: 'brown' }, envelope: { attack: 0.001, decay: 0.15, sustain: 0, release: 0.1 }, volume: -12 }).connect(fx); },
-          makeFx() { const d = new Tone.Distortion(0.6); d.toDestination(); return d; },
-          trigger(synth, freq, row) { synth.triggerAttackRelease('16n'); },
-          isDrum: true,
-        },
-      ],
+    { // block 3 — keys
+      makeSynth(fx) { return new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.08, decay: 0.4, sustain: 0.1, release: 1 }, volume: -14 }).connect(fx); },
+      makeFx() { const d = new Tone.FeedbackDelay('4n', 0.2); d.wet.value = 0.2; d.toDestination(); return d; },
+      trigger(synth, freq) { synth.triggerAttackRelease(freq, '8n'); },
     },
-  };
+    { // block 4 — ethereal strings
+      makeSynth(fx) { return new Tone.FMSynth({ harmonicity: 3, modulationIndex: 1, oscillator: { type: 'sine' }, envelope: { attack: 0.4, decay: 0.8, sustain: 0.5, release: 2 }, volume: -16 }).connect(fx); },
+      makeFx() { const c = new Tone.Chorus(2, 4, 0.6); c.wet.value = 0.5; c.start(); c.toDestination(); return c; },
+      trigger(synth, freq) { synth.triggerAttackRelease(freq, '2n'); },
+    },
+  ];
+  */
 
   const AudioEngine = {
     ready: false,
-    voices: [null, null, null, null, null],   // 5 synths
-    fxChains: [null, null, null, null, null],  // 5 FX chains
+    synths: [null, null, null, null, null],
+    fxChains: [null, null, null, null, null],
     drone: null,
     droneGain: null,
-    currentVibe: null,
+    initialized: false,
     baseFreq: 220,
 
     async init() {
       if (this.ready) return;
       await Tone.start();
       this.ready = true;
+      this.setupVoices();
     },
 
-    setVibe(vibeKey) {
-      if (this.currentVibe === vibeKey) return;
-      // Dispose old voices
+    setupVoices() {
+      if (this.initialized) return;
       for (let i = 0; i < 5; i++) {
-        if (this.voices[i]) { try { this.voices[i].dispose(); } catch(e) {} }
-        if (this.fxChains[i]) { try { this.fxChains[i].dispose(); } catch(e) {} }
+        this.fxChains[i] = VOICES[i].makeFx();
+        this.synths[i] = VOICES[i].makeSynth(this.fxChains[i]);
       }
-      const vibe = VIBES[vibeKey];
-      for (let i = 0; i < 5; i++) {
-        this.fxChains[i] = vibe.voices[i].makeFx();
-        this.voices[i] = vibe.voices[i].makeSynth(this.fxChains[i]);
-      }
-      this.currentVibe = vibeKey;
+      this.initialized = true;
     },
 
     getFreq(row) {
-      const vibe = VIBES[this.currentVibe];
-      if (!vibe || row < 0 || row >= vibe.scale.length) return this.baseFreq;
-      return this.baseFreq * Math.pow(2, vibe.scale[row] / 12);
+      if (row < 0 || row >= SCALE.length) return this.baseFreq;
+      return this.baseFreq * Math.pow(2, SCALE[row] / 12);
     },
 
-    playNote(col, row, chaosLevel) {
-      if (!this.ready || !this.currentVibe) return;
-      const block = Math.floor(col / 3); // colToBlock
-      const voice = this.voices[block];
-      const voiceCfg = VIBES[this.currentVibe].voices[block];
-      if (!voice || !voiceCfg) return;
+    playNote(col, row) {
+      if (!this.ready) return;
+      const block = Math.floor(col / COLS_PER_LETTER);
+      const synth = this.synths[block];
+      const voiceCfg = VOICES[block];
+      if (!synth || !voiceCfg) return;
       try {
-        if (voiceCfg.isDrum) {
-          voiceCfg.trigger(voice, null, row);
-        } else {
-          const freq = this.getFreq(row);
-          voiceCfg.trigger(voice, freq, row);
-        }
+        const freq = this.getFreq(row);
+        voiceCfg.trigger(synth, freq);
       } catch(e) {}
     },
 
@@ -916,13 +822,13 @@
   <script type="text/babel">
     const { useState, useRef, useCallback, useEffect } = React;
 
-    // Grid dimensions: 5 letter blocks, each 6 rows x 3 cols
-    const GRID_ROWS = 5;
-    const COLS_PER_LETTER = 3;
+    // Grid dimensions: 5 letter blocks, each 7 rows x 5 cols
+    const GRID_ROWS = 20;
+    const COLS_PER_LETTER = 10;
     const NUM_LETTERS = 5;
-    const TOTAL_COLS = NUM_LETTERS * COLS_PER_LETTER; // 15
-    const TOTAL_CELLS = TOTAL_COLS * GRID_ROWS; // 90
-    const BLOCK_GAP = 8; // px gap between letter blocks (~0.5rem)
+    const TOTAL_COLS = NUM_LETTERS * COLS_PER_LETTER; // 55
+    const TOTAL_CELLS = TOTAL_COLS * GRID_ROWS; // 1100
+    const BLOCK_GAP = 12; // px gap between letter blocks
     const MAX_GUESSES = 6;
 
     // Personality avatar images
@@ -955,35 +861,48 @@
       return PIXEL_FONT[letter][row][colToSubCol(col)] === 1;
     }
 
-    // Pixel font: A-Z as 5 rows x 3 cols (1 = filled, 0 = empty)
-    const PIXEL_FONT = {
-      'A': [[0,1,0],[1,0,1],[1,1,1],[1,0,1],[1,0,1]],
-      'B': [[1,1,0],[1,0,1],[1,1,0],[1,0,1],[1,1,0]],
-      'C': [[0,1,1],[1,0,0],[1,0,0],[1,0,0],[0,1,1]],
-      'D': [[1,1,0],[1,0,1],[1,0,1],[1,0,1],[1,1,0]],
-      'E': [[1,1,1],[1,0,0],[1,1,0],[1,0,0],[1,1,1]],
-      'F': [[1,1,1],[1,0,0],[1,1,0],[1,0,0],[1,0,0]],
-      'G': [[0,1,1],[1,0,0],[1,0,1],[1,0,1],[0,1,1]],
-      'H': [[1,0,1],[1,0,1],[1,1,1],[1,0,1],[1,0,1]],
-      'I': [[1,1,1],[0,1,0],[0,1,0],[0,1,0],[1,1,1]],
-      'J': [[0,0,1],[0,0,1],[0,0,1],[1,0,1],[0,1,0]],
-      'K': [[1,0,1],[1,1,0],[1,0,0],[1,1,0],[1,0,1]],
-      'L': [[1,0,0],[1,0,0],[1,0,0],[1,0,0],[1,1,1]],
-      'M': [[1,0,1],[1,1,1],[1,0,1],[1,0,1],[1,0,1]],
-      'N': [[1,0,1],[1,1,1],[1,1,1],[1,0,1],[1,0,1]],
-      'O': [[0,1,0],[1,0,1],[1,0,1],[1,0,1],[0,1,0]],
-      'P': [[1,1,0],[1,0,1],[1,1,0],[1,0,0],[1,0,0]],
-      'Q': [[0,1,0],[1,0,1],[1,0,1],[1,1,0],[0,1,1]],
-      'R': [[1,1,0],[1,0,1],[1,1,0],[1,1,0],[1,0,1]],
-      'S': [[0,1,1],[1,0,0],[0,1,0],[0,0,1],[1,1,0]],
-      'T': [[1,1,1],[0,1,0],[0,1,0],[0,1,0],[0,1,0]],
-      'U': [[1,0,1],[1,0,1],[1,0,1],[1,0,1],[0,1,0]],
-      'V': [[1,0,1],[1,0,1],[1,0,1],[0,1,0],[0,1,0]],
-      'W': [[1,0,1],[1,0,1],[1,0,1],[1,1,1],[1,0,1]],
-      'X': [[1,0,1],[1,0,1],[0,1,0],[1,0,1],[1,0,1]],
-      'Y': [[1,0,1],[1,0,1],[0,1,0],[0,1,0],[0,1,0]],
-      'Z': [[1,1,1],[0,0,1],[0,1,0],[1,0,0],[1,1,1]],
+    // Base pixel font: 5x7, scaled to 10x20 (2x each dim + 3 rows padding top/bottom)
+    const PIXEL_FONT_BASE = {
+      'A': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[0,0,0,0,0]],
+      'B': [[1,1,1,1,0],[1,0,0,0,1],[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[0,0,0,0,0]],
+      'C': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]],
+      'D': [[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[0,0,0,0,0]],
+      'E': [[1,1,1,1,1],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,1],[0,0,0,0,0]],
+      'F': [[1,1,1,1,1],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[0,0,0,0,0]],
+      'G': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,0],[1,0,1,1,1],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]],
+      'H': [[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,0,0,0,0]],
+      'I': [[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[1,1,1,1,1],[0,0,0,0,0]],
+      'J': [[0,0,1,1,1],[0,0,0,1,0],[0,0,0,1,0],[0,0,0,1,0],[1,0,0,1,0],[0,1,1,0,0],[0,0,0,0,0]],
+      'K': [[1,0,0,0,1],[1,0,0,1,0],[1,0,1,0,0],[1,1,0,0,0],[1,0,1,0,0],[1,0,0,1,0],[1,0,0,0,1]],
+      'L': [[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,1],[0,0,0,0,0]],
+      'M': [[1,0,0,0,1],[1,1,0,1,1],[1,0,1,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,0,0,0,0]],
+      'N': [[1,0,0,0,1],[1,1,0,0,1],[1,0,1,0,1],[1,0,0,1,1],[1,0,0,0,1],[1,0,0,0,1],[0,0,0,0,0]],
+      'O': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]],
+      'P': [[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[0,0,0,0,0]],
+      'Q': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,1,0,1],[1,0,0,1,0],[0,1,1,0,1],[0,0,0,0,0]],
+      'R': [[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[1,0,0,1,0],[1,0,0,0,1],[0,0,0,0,0]],
+      'S': [[0,1,1,1,1],[1,0,0,0,0],[0,1,1,1,0],[0,0,0,0,1],[0,0,0,0,1],[1,1,1,1,0],[0,0,0,0,0]],
+      'T': [[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,0,0,0]],
+      'U': [[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]],
+      'V': [[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,0,1,0],[0,1,0,1,0],[0,0,1,0,0],[0,0,0,0,0]],
+      'W': [[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,1,0,1],[1,1,0,1,1],[1,0,0,0,1],[0,0,0,0,0]],
+      'X': [[1,0,0,0,1],[0,1,0,1,0],[0,0,1,0,0],[0,0,1,0,0],[0,1,0,1,0],[1,0,0,0,1],[0,0,0,0,0]],
+      'Y': [[1,0,0,0,1],[0,1,0,1,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,0,0,0]],
+      'Z': [[1,1,1,1,1],[0,0,0,1,0],[0,0,1,0,0],[0,1,0,0,0],[1,0,0,0,0],[1,1,1,1,1],[0,0,0,0,0]],
     };
+    // Scale 5x7 → 10x20 (2x width, nearest-neighbor stretch to fill full height)
+    const PIXEL_FONT = {};
+    for (const [letter, baseRows] of Object.entries(PIXEL_FONT_BASE)) {
+      // Strip trailing blank rows so letters fill the full grid height
+      let rows = [...baseRows];
+      while (rows.length > 1 && rows[rows.length - 1].every(p => p === 0)) rows.pop();
+      const big = [];
+      for (let r = 0; r < GRID_ROWS; r++) {
+        const srcRow = Math.floor(r * rows.length / GRID_ROWS);
+        big.push(rows[srcRow].flatMap(px => [px, px]));
+      }
+      PIXEL_FONT[letter] = big;
+    }
 
     const KB_ROWS = [
       ['Q','W','E','R','T','Y','U','I','O','P'],
@@ -1115,10 +1034,9 @@ Rules:
     function createSequencerSketch(containerEl, gameStateRef, callbacksRef) {
       let particles = [];
       let canvasW, canvasH, cellSize, cellGap;
-      const MARGIN = 8;
+      const MARGIN = 2;
 
       function computeSize() {
-        // Use parent width, falling back to window width minus padding
         canvasW = containerEl.clientWidth || containerEl.parentElement?.clientWidth || Math.min(window.innerWidth - 32, 700);
         cellGap = 2;
         const totalInterCellGaps = (TOTAL_COLS - NUM_LETTERS) * cellGap;
@@ -1131,7 +1049,6 @@ Rules:
       function getCellPos(col, row) {
         const block = colToBlock(col);
         const subCol = colToSubCol(col);
-        // x = margin + (block * 3 cells * size) + (block * 2 intra-gaps) + (block * block-gap) + subCol * (size + gap)
         const x = MARGIN + block * (COLS_PER_LETTER * cellSize + (COLS_PER_LETTER - 1) * cellGap + BLOCK_GAP) + subCol * (cellSize + cellGap);
         const y = MARGIN + row * (cellSize + cellGap);
         return { x, y };
@@ -1174,7 +1091,7 @@ Rules:
               state.lastStepTime = now;
               for (let row = 0; row < GRID_ROWS; row++) {
                 if (state.nodes[state.currentStep] && state.nodes[state.currentStep][row]) {
-                  AudioEngine.playNote(state.currentStep, row, chaos);
+                  AudioEngine.playNote(state.currentStep, row);
                 }
               }
             }
@@ -1328,21 +1245,21 @@ Rules:
       chill: {
         label: 'Chill', desc: 'No time pressure',
         fadeMin: 8000, fadeMax: 12000, fadeChaosScale: 0.2,
-        activateMin: 4000, activateBase: 10000, activateScale: 100,
+        activateInterval: 8000, batchSize: 10,
         creepDelay: 10000, creepRand: 10000, creepProb: 0.008,
         graceDelay: 12000,
       },
       normal: {
         label: 'Normal', desc: 'Balanced challenge',
         fadeMin: 4000, fadeMax: 7000, fadeChaosScale: 0.4,
-        activateMin: 2000, activateBase: 6000, activateScale: 150,
+        activateInterval: 4000, batchSize: 40,
         creepDelay: 6000, creepRand: 8000, creepProb: 0.015,
         graceDelay: 8000,
       },
       chaos: {
         label: 'Chaos', desc: 'Good luck',
         fadeMin: 1500, fadeMax: 4000, fadeChaosScale: 0.6,
-        activateMin: 600, activateBase: 3000, activateScale: 200,
+        activateInterval: 2000, batchSize: 40,
         creepDelay: 2000, creepRand: 4000, creepProb: 0.04,
         graceDelay: 4000,
       },
@@ -1352,7 +1269,6 @@ Rules:
       const [setupOpen, setSetupOpen] = useState(false);
       const [apiKey, setApiKey] = useState('');
       const [difficulty, setDifficulty] = useState('normal');
-      const [musicVibe, setMusicVibe] = useState('glitchy');
       const [started, setStarted] = useState(false);
       const [showGuide, setShowGuide] = useState(false);
       const [showGameOver, setShowGameOver] = useState(false);
@@ -1425,10 +1341,6 @@ Rules:
         gameStateRef.current.currentGuessResult = guessResult;
       }, [started, nodes, chaosLevel, breatheActive, currentInput, guessResult]);
 
-      // Sync music vibe
-      useEffect(() => {
-        if (started) AudioEngine.setVibe(musicVibe);
-      }, [musicVibe, started]);
 
       // Initialize p5
       useEffect(() => {
@@ -1480,12 +1392,11 @@ Rules:
 
       // Auto-activate nodes — only when actively playing a word
       useEffect(() => {
-        if (!started || showGameOver || wordPhase !== 'playing') return;
+        if (!started || showGameOver || showCongrats || wordPhase !== 'playing') return;
         const diff = DIFFICULTY[difficulty];
         const initialDelay = guessCount === 0 ? diff.graceDelay : 0;
         const startTimer = setTimeout(() => {
           const tick = () => {
-            const delay = Math.max(diff.activateMin, diff.activateBase - wordsCompleted * diff.activateScale);
             autoActivateTimerRef.current = setTimeout(() => {
               setNodes(prev => {
                 const inactive = [];
@@ -1495,13 +1406,17 @@ Rules:
                   }
                 }
                 if (inactive.length === 0) return prev;
-                const [tc, tr] = inactive[Math.floor(Math.random() * inactive.length)];
                 const next = prev.map(c => [...c]);
-                next[tc][tr] = true;
+                for (let i = 0; i < diff.batchSize && inactive.length > 0; i++) {
+                  const idx = Math.floor(Math.random() * inactive.length);
+                  const [tc, tr] = inactive[idx];
+                  next[tc][tr] = true;
+                  inactive.splice(idx, 1);
+                }
                 return next;
               });
               tick();
-            }, delay);
+            }, diff.activateInterval);
           };
           tick();
         }, initialDelay);
@@ -1509,11 +1424,11 @@ Rules:
           clearTimeout(startTimer);
           clearTimeout(autoActivateTimerRef.current);
         };
-      }, [started, wordsCompleted, showGameOver, wordPhase, guessCount, difficulty]);
+      }, [started, wordsCompleted, showGameOver, showCongrats, wordPhase, guessCount, difficulty]);
 
       // Creep-back for silenced nodes — only during active play
       useEffect(() => {
-        if (!started || showGameOver || wordPhase !== 'playing') return;
+        if (!started || showGameOver || showCongrats || wordPhase !== 'playing') return;
         creepBackTimerRef.current = setInterval(() => {
           const now = Date.now();
           setNodes(prev => {
@@ -1538,7 +1453,7 @@ Rules:
           });
         }, 500);
         return () => clearInterval(creepBackTimerRef.current);
-      }, [started, showGameOver, wordPhase, difficulty]);
+      }, [started, showGameOver, showCongrats, wordPhase, difficulty]);
 
       // Keyboard fading — use setTimeout chain so chaos changes don't reset the timer
       const chaosRef = useRef(0);
@@ -1571,14 +1486,14 @@ Rules:
         };
       }, [wordPhase, fadePaused, answer, difficulty]);
 
-      // Game over check: ~85% of cells active
+      // Game over check: 100% of cells active
       useEffect(() => {
-        if (!started || showGameOver) return;
+        if (!started || showGameOver || showCongrats) return;
         const activeCount = nodes.flat().filter(Boolean).length;
-        if (activeCount >= Math.floor(TOTAL_CELLS * 0.85)) {
+        if (activeCount >= TOTAL_CELLS) {
           const timer = setTimeout(() => {
             const currentActive = nodes.flat().filter(Boolean).length;
-            if (currentActive >= Math.floor(TOTAL_CELLS * 0.85)) {
+            if (currentActive >= TOTAL_CELLS) {
               setShowGameOver(true);
             }
           }, 3000);
@@ -1938,35 +1853,23 @@ Rules:
             setWordsCompleted(prev => prev + 1);
             setWordPhase('solved');
 
-            // Silence 5-8 cells based on speed
-            const speedBonus = newGuessCount <= 2 ? 3 : newGuessCount <= 4 ? 1 : 0;
-            const toSilence = 5 + speedBonus;
-            setNodes(prev => {
-              const next = prev.map(c => [...c]);
-              const activeCells = [];
-              for (let c = 0; c < TOTAL_COLS; c++) {
-                for (let r = 0; r < GRID_ROWS; r++) {
-                  if (next[c][r]) activeCells.push([c, r]);
-                }
-              }
-              const shuffled = shuffleArray(activeCells);
-              for (let i = 0; i < Math.min(toSilence, shuffled.length); i++) {
-                const [c, r] = shuffled[i];
-                next[c][r] = false;
-                silencedAtRef.current[`${c},${r}`] = Date.now();
-              }
-              return next;
-            });
-
             setWordHistory(prev => [...prev, { word: answer, solved: true, score, guesses: newGuessCount }]);
             setHints([]);
             setHintLevel(0);
 
-            // Next word after a pause
+            // Check if all 6 words done
             setTimeout(() => {
               setGuessResult(null);
               setCurrentInput('');
-              fetchNextWord();
+              setWordsCompleted(prev => {
+                if (prev >= 6) {
+                  setShowCongrats(true);
+                  setWordPhase('idle');
+                  return prev;
+                }
+                fetchNextWord();
+                return prev;
+              });
             }, 1500);
 
           } else if (newGuessCount >= MAX_GUESSES) {
@@ -1990,15 +1893,24 @@ Rules:
               return next;
             });
 
+            setWordsCompleted(prev => prev + 1);
             setWordHistory(prev => [...prev, { word: answer, solved: false, score: 0, guesses: newGuessCount }]);
             setHints([]);
             setHintLevel(0);
 
-            // Next word after a pause
+            // Check if all 6 words done
             setTimeout(() => {
               setGuessResult(null);
               setCurrentInput('');
-              fetchNextWord();
+              setWordsCompleted(prev => {
+                if (prev >= 6) {
+                  setShowCongrats(true);
+                  setWordPhase('idle');
+                  return prev;
+                }
+                fetchNextWord();
+                return prev;
+              });
             }, 2000);
 
           } else {
@@ -2045,7 +1957,6 @@ Rules:
       // Start game
       const handleStart = useCallback(async () => {
         await AudioEngine.init();
-        AudioEngine.setVibe(musicVibe);
         setStarted(true);
         gameStateRef.current.lastStepTime = performance.now();
 
@@ -2071,7 +1982,7 @@ Rules:
         }
 
         fetchNextWord();
-      }, [fetchNextWord, musicVibe]);
+      }, [fetchNextWord]);
 
       // Restart
       const handleRestart = useCallback(() => {
@@ -2133,21 +2044,6 @@ Rules:
               </div>
             </div>
             <div className="setup-row">
-              <label>Music</label>
-              <div className="difficulty-options">
-                {Object.entries(VIBES).map(([key, val]) => (
-                  <button
-                    key={key}
-                    className={`diff-btn ${musicVibe === key ? 'active' : ''}`}
-                    onClick={() => setMusicVibe(key)}
-                  >
-                    <span className="diff-label">{val.label}</span>
-                    <span className="diff-desc">{val.desc}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="setup-row">
               <label>API Key <span style={{fontWeight:500, textTransform:'none', letterSpacing:0, color:'#b07cd8'}}>(optional)</span></label>
               <input
                 type="password"
@@ -2183,17 +2079,23 @@ Rules:
                 ) : wordPhase === 'solved' ? (
                   <div className="hint-bubble">
                     <img className="hint-icon" src={getAvatarSrc(currentPersonality)} alt="" />
-                    <span className="hint-waiting">nice! next word coming...</span>
+                    <div className="hint-content">
+                      <span className="hint-personality">{currentPersonality || 'Host'}</span>
+                      <span className="hint-text">nice! next word coming...</span>
+                    </div>
                   </div>
                 ) : wordPhase === 'failed' ? (
                   <div className="hint-bubble">
                     <img className="hint-icon" src={getAvatarSrc(currentPersonality)} alt="" />
-                    <span className="hint-waiting">the word was {answer}... next one coming...</span>
+                    <div className="hint-content">
+                      <span className="hint-personality">{currentPersonality || 'Host'}</span>
+                      <span className="hint-text">the word was {answer}... next one coming...</span>
+                    </div>
                   </div>
                 ) : null}
               </div>
               <div className="game-stats">
-                <div><span className="stat-number">{guessCount + 1}</span> of <span className="stat-number">{MAX_GUESSES}</span> <span className="stat-label">word</span></div>
+                <div><span className="stat-number">{wordsCompleted + 1}</span> of <span className="stat-number">6</span> <span className="stat-label">word</span></div>
                 <div><span className="stat-number">{totalScore}</span> <span className="stat-label">points</span></div>
                 <div><span className="stat-number">{Math.round(activeCount / maxNonWord * 100)}%</span> <span className="stat-label">chaos</span></div>
               </div>
@@ -2316,7 +2218,7 @@ Rules:
                 <div className="modal-icon">{'\uD83C\uDF89'}</div>
                 <h2>You Beat the Chaos!</h2>
                 <p style={{margin: '0.5rem 0 1rem', color: '#b07cd8', fontSize: '1rem'}}>
-                  All {FALLBACK_WORDS.length} words conquered
+                  All 6 words completed before chaos took over!
                 </p>
                 <div className="modal-stats">
                   <div className="modal-stat">
