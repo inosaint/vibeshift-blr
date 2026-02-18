@@ -1,0 +1,2101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chaos Typewriter - Vibeshift BLR</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Quicksand', 'Nunito', 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #fce4ec 0%, #e8eaf6 25%, #e0f7fa 50%, #f3e5f5 75%, #fff9c4 100%);
+      background-attachment: fixed;
+      color: #4a3f6b;
+      min-height: 100vh;
+    }
+
+    nav {
+      padding: 0.75rem 1.5rem;
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(200, 160, 220, 0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    nav a {
+      color: #9c6bc4;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    nav a:hover { color: #7b40a8; text-decoration: underline; }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .setup-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #b07cd8;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    .setup-toggle:hover { color: #8e44ad; }
+
+    .help-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid rgba(186, 140, 214, 0.4);
+      background: rgba(255, 255, 255, 0.45);
+      color: #b07cd8;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+      padding: 0;
+    }
+
+    .help-btn:hover {
+      background: rgba(255, 255, 255, 0.7);
+      border-color: #c084e0;
+      color: #8e44ad;
+    }
+
+    .setup-toggle .arrow {
+      display: inline-block;
+      transition: transform 0.2s;
+      font-size: 0.7rem;
+    }
+
+    .setup-toggle .arrow.open { transform: rotate(90deg); }
+
+    .setup-panel {
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(200, 160, 220, 0.2);
+      padding: 0 1.5rem;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+
+    .setup-panel.open {
+      max-height: 400px;
+      padding: 1rem 1.5rem;
+    }
+
+    .setup-row {
+      margin-bottom: 0.75rem;
+    }
+
+    .difficulty-options {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.3rem;
+    }
+
+    .diff-btn {
+      flex: 1;
+      padding: 0.5rem 0.5rem;
+      border-radius: 10px;
+      border: 2px solid rgba(186, 140, 214, 0.3);
+      background: rgba(255, 255, 255, 0.4);
+      color: #4a3f6b;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .diff-btn:hover {
+      background: rgba(255, 255, 255, 0.6);
+      border-color: #c084e0;
+    }
+
+    .diff-btn.active {
+      background: rgba(186, 140, 214, 0.25);
+      border-color: #b07cd8;
+      color: #7e57c2;
+    }
+
+    .diff-btn .diff-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .diff-btn .diff-desc {
+      display: block;
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: #9c6bc4;
+      margin-top: 0.15rem;
+    }
+
+    .setup-panel label {
+      display: block;
+      font-size: 0.8rem;
+      color: #9c6bc4;
+      margin-bottom: 0.3rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+    }
+
+    .setup-panel input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.6);
+      border: 2px solid rgba(186, 140, 214, 0.3);
+      border-radius: 10px;
+      padding: 0.6rem 0.8rem;
+      color: #4a3f6b;
+      font-family: inherit;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .setup-panel input:focus {
+      border-color: #c084e0;
+      box-shadow: 0 0 0 3px rgba(192, 132, 224, 0.15);
+    }
+
+    .header {
+      padding: 0.75rem 1.5rem 0.25rem;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #f06292, #ba68c8, #7e57c2, #42a5f5, #26c6da, #66bb6a, #fdd835, #ff7043);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: rainbow-shift 6s ease infinite;
+    }
+
+    .header .byline {
+      font-size: 0.95rem;
+      color: #b07cd8;
+      font-weight: 500;
+      margin-top: 0.25rem;
+    }
+
+    @keyframes rainbow-shift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Sequencer canvas */
+    #sequencer-container {
+      display: flex;
+      justify-content: center;
+      padding: 0.5rem 1rem;
+    }
+
+    #sequencer-container canvas {
+      display: block;
+      border-radius: 12px;
+    }
+
+    /* Game area */
+    .game-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      gap: 0.5rem;
+    }
+
+    .status-msg {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #b07cd8;
+      min-height: 1.4em;
+      text-align: center;
+    }
+
+    .status-msg.win { color: #5aae72; }
+    .status-msg.lose { color: #d47a9a; }
+
+    /* Keyboard */
+    .keyboard {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      margin-top: 0.25rem;
+    }
+
+    .kb-row {
+      display: flex;
+      gap: 5px;
+    }
+
+    .key {
+      height: 50px;
+      min-width: 36px;
+      padding: 0 10px;
+      border-radius: 8px;
+      border: none;
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(6px);
+      color: #4a3f6b;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .key:hover { background: rgba(255, 255, 255, 0.75); }
+    .key:active { transform: scale(0.95); }
+
+    .key.wide { min-width: 60px; font-size: 0.7rem; }
+
+    .key.faded {
+      opacity: 0.15;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+
+    .key.correct {
+      background: #a0d8c0;
+      color: #2d5e45;
+    }
+
+    .key.present {
+      background: #e8a0bf;
+      color: #6b2f4a;
+    }
+
+    .key.absent {
+      background: rgba(186, 140, 214, 0.2);
+      color: #8a7ba0;
+    }
+
+    /* Speech bubble hint */
+    .hint-bubble-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 0.5rem 1rem 0;
+      min-height: 3em;
+    }
+
+    .hint-bubble {
+      position: relative;
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(200, 160, 220, 0.35);
+      border-radius: 16px;
+      padding: 0.6rem 1.2rem;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(100, 60, 140, 0.08);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .hint-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 8px solid rgba(255, 255, 255, 0.55);
+    }
+
+    .hint-bubble .hint-personality {
+      display: block;
+      font-weight: 700;
+      font-size: 0.75rem;
+      color: #e91e63;
+      margin-bottom: 0.2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .hint-bubble .hint-text {
+      color: #4a3f6b;
+      font-size: 0.95rem;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .hint-bubble.waiting {
+      border-style: dashed;
+    }
+
+    .hint-bubble .hint-waiting {
+      color: #b07cd8;
+      font-style: italic;
+      font-size: 0.85rem;
+    }
+
+    /* Breathe indicator */
+    .breathe-hint {
+      font-size: 0.75rem;
+      color: rgba(156, 107, 196, 0.6);
+      text-align: center;
+      min-height: 1em;
+    }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(40, 20, 60, 0.45);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      animation: fade-in 0.3s ease;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal {
+      background: linear-gradient(135deg, #fce4ec 0%, #e8eaf6 25%, #e0f7fa 50%, #f3e5f5 75%, #fff9c4 100%);
+      border: 1px solid rgba(200, 160, 220, 0.35);
+      border-radius: 20px;
+      padding: 2rem 2.5rem;
+      text-align: center;
+      max-width: 380px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(100, 60, 140, 0.15);
+    }
+
+    .modal.guide {
+      text-align: left;
+    }
+
+    .modal.guide h2 {
+      text-align: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .modal.guide p {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      margin-bottom: 0.6rem;
+      color: #4a3f6b;
+    }
+
+    .modal.guide .twist {
+      background: rgba(255, 255, 255, 0.35);
+      border-radius: 10px;
+      padding: 0.6rem 0.75rem;
+      margin: 0.75rem 0;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: #6b4a8a;
+    }
+
+    .modal-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #4a3f6b;
+      margin-bottom: 0.3rem;
+    }
+
+    .modal .modal-stats {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .modal .modal-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .modal .modal-stat .stat-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #4a3f6b;
+    }
+
+    .modal .modal-stat .stat-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #b07cd8;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* Word history list in game over */
+    .word-list {
+      margin: 0.75rem 0;
+      text-align: left;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .word-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.3rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .word-item:nth-child(odd) {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .word-item .word-text {
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #4a3f6b;
+    }
+
+    .word-item .word-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 20px;
+    }
+
+    .word-item .word-badge.solved {
+      background: #a0d8c0;
+      color: #2d5e45;
+    }
+
+    .word-item .word-badge.missed {
+      background: #e8a0bf;
+      color: #6b2f4a;
+    }
+
+    .current-word-reveal {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #7e57c2;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.5rem;
+    }
+
+    .btn {
+      margin-top: 0.5rem;
+      padding: 0.6rem 1.5rem;
+      border-radius: 10px;
+      border: 2px solid rgba(186, 140, 214, 0.3);
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(6px);
+      color: #9c6bc4;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.7);
+      border-color: #c084e0;
+    }
+
+    /* Start overlay */
+    .start-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(40, 20, 60, 0.45);
+      backdrop-filter: blur(4px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      cursor: pointer;
+      animation: fade-in 0.3s ease;
+    }
+
+    .start-box {
+      background: linear-gradient(135deg, #fce4ec 0%, #e8eaf6 25%, #e0f7fa 50%, #f3e5f5 75%, #fff9c4 100%);
+      border: 1px solid rgba(200, 160, 220, 0.35);
+      border-radius: 20px;
+      padding: 2rem 2.5rem;
+      text-align: center;
+      max-width: 380px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(100, 60, 140, 0.15);
+    }
+
+    .start-box h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #4a3f6b;
+      margin-bottom: 0.5rem;
+    }
+
+    .start-box p {
+      font-size: 0.85rem;
+      color: #7a6a9a;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+
+    #root {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 480px) {
+      .key { height: 44px; min-width: 28px; padding: 0 7px; font-size: 0.75rem; }
+      .key.wide { min-width: 48px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+  // ── Audio Engine (Tone.js) ────────────────────────────────────
+  const VIBES = {
+    glitchy: {
+      label: 'Glitchy', desc: 'Bit-crushed chaos',
+      scale: [0, 1, 3, 5, 6, 8, 10, 12, 13, 15, 17, 18, 20, 22, 23, 25], // chromatic-ish
+      makeSynth(fx) {
+        return new Tone.MetalSynth({
+          frequency: 200,
+          envelope: { attack: 0.001, decay: 0.2, release: 0.1 },
+          harmonicity: 5.1,
+          modulationIndex: 32,
+          resonance: 4000,
+          octaves: 1.5,
+          volume: -12,
+        }).connect(fx);
+      },
+      makeFx() {
+        const crusher = new Tone.BitCrusher(4);
+        const pingPong = new Tone.PingPongDelay('8n', 0.3);
+        pingPong.wet.value = 0.25;
+        crusher.connect(pingPong);
+        pingPong.toDestination();
+        return crusher;
+      },
+      triggerNote(synth, freq) {
+        synth.frequency = freq;
+        synth.triggerAttackRelease('16n');
+      },
+    },
+    calm: {
+      label: 'Calm', desc: 'Soft & warm',
+      scale: [0, 3, 5, 7, 10, 12, 15, 17, 19, 22, 24, 27, 29, 31, 34, 36], // pentatonic minor
+      makeSynth(fx) {
+        return new Tone.FMSynth({
+          harmonicity: 3,
+          modulationIndex: 10,
+          oscillator: { type: 'sine' },
+          envelope: { attack: 0.05, decay: 0.3, sustain: 0.1, release: 0.8 },
+          modulation: { type: 'triangle' },
+          modulationEnvelope: { attack: 0.1, decay: 0.2, sustain: 0.3, release: 0.5 },
+          volume: -14,
+        }).connect(fx);
+      },
+      makeFx() {
+        const reverb = new Tone.Reverb({ decay: 3, wet: 0.5 });
+        const delay = new Tone.FeedbackDelay('4n', 0.2);
+        delay.wet.value = 0.15;
+        reverb.connect(delay);
+        delay.toDestination();
+        return reverb;
+      },
+      triggerNote(synth, freq) {
+        synth.triggerAttackRelease(freq, '8n');
+      },
+    },
+    dreamy: {
+      label: 'Dreamy', desc: 'Floaty plucks',
+      scale: [0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23, 24, 26], // lydian
+      makeSynth(fx) {
+        return new Tone.PluckSynth({
+          attackNoise: 1,
+          dampening: 4000,
+          resonance: 0.95,
+          volume: -10,
+        }).connect(fx);
+      },
+      makeFx() {
+        const reverb = new Tone.Reverb({ decay: 5, wet: 0.6 });
+        const chorus = new Tone.Chorus(4, 2.5, 0.5);
+        chorus.wet.value = 0.4;
+        chorus.start();
+        reverb.connect(chorus);
+        chorus.toDestination();
+        return reverb;
+      },
+      triggerNote(synth, freq) {
+        synth.triggerAttack(freq);
+      },
+    },
+    tense: {
+      label: 'Tense', desc: 'Dark & gritty',
+      scale: [0, 1, 3, 5, 7, 8, 10, 12, 13, 15, 17, 19, 20, 22, 24, 25], // phrygian
+      makeSynth(fx) {
+        return new Tone.MonoSynth({
+          oscillator: { type: 'sawtooth' },
+          filter: { Q: 6, type: 'lowpass', rolloff: -24 },
+          envelope: { attack: 0.005, decay: 0.2, sustain: 0.2, release: 0.4 },
+          filterEnvelope: { attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.4, baseFrequency: 200, octaves: 4 },
+          volume: -16,
+        }).connect(fx);
+      },
+      makeFx() {
+        const dist = new Tone.Distortion(0.4);
+        const filter = new Tone.AutoFilter('2n').start();
+        filter.wet.value = 0.3;
+        dist.connect(filter);
+        filter.toDestination();
+        return dist;
+      },
+      triggerNote(synth, freq) {
+        synth.triggerAttackRelease(freq, '16n');
+      },
+    },
+  };
+
+  const AudioEngine = {
+    ready: false,
+    synth: null,
+    fx: null,
+    drone: null,
+    droneGain: null,
+    currentVibe: null,
+    baseFreq: 220,
+
+    async init() {
+      if (this.ready) return;
+      await Tone.start();
+      this.ready = true;
+    },
+
+    setVibe(vibeKey) {
+      if (this.currentVibe === vibeKey) return;
+      // Dispose old synth/fx
+      if (this.synth) { try { this.synth.dispose(); } catch(e) {} }
+      if (this.fx) { try { this.fx.dispose(); } catch(e) {} }
+
+      const vibe = VIBES[vibeKey];
+      this.fx = vibe.makeFx();
+      this.synth = vibe.makeSynth(this.fx);
+      this.currentVibe = vibeKey;
+    },
+
+    getFreq(stepIndex) {
+      const vibe = VIBES[this.currentVibe];
+      if (!vibe || stepIndex < 0 || stepIndex >= vibe.scale.length) return this.baseFreq;
+      return this.baseFreq * Math.pow(2, vibe.scale[stepIndex] / 12);
+    },
+
+    playNote(stepIndex, chaosLevel) {
+      if (!this.ready || !this.synth || !this.currentVibe) return;
+      const freq = this.getFreq(stepIndex);
+      const vibe = VIBES[this.currentVibe];
+      try {
+        vibe.triggerNote(this.synth, freq);
+      } catch(e) {}
+    },
+
+    startDrone() {
+      if (!this.ready) return;
+      if (this.drone) return;
+      this.droneGain = new Tone.Gain(0).toDestination();
+      this.droneGain.gain.rampTo(0.15, 1.2);
+
+      this.drone = new Tone.PolySynth(Tone.FMSynth, {
+        harmonicity: 2,
+        modulationIndex: 1,
+        oscillator: { type: 'sine' },
+        envelope: { attack: 1, decay: 0, sustain: 1, release: 2 },
+        volume: -18,
+      }).connect(this.droneGain);
+
+      // LFO for breathing feel
+      this._droneLfo = new Tone.LFO('0.25hz', -20, -14).start();
+      this._droneLfo.connect(this.drone.volume);
+
+      this.drone.triggerAttack(['A3', 'E4', 'A4']);
+    },
+
+    stopDrone() {
+      if (!this.drone) return;
+      if (this.droneGain) {
+        this.droneGain.gain.rampTo(0, 1.5);
+      }
+      const d = this.drone;
+      const g = this.droneGain;
+      const l = this._droneLfo;
+      setTimeout(() => {
+        try { d.releaseAll(); d.dispose(); } catch(e) {}
+        try { g.dispose(); } catch(e) {}
+        try { l.dispose(); } catch(e) {}
+      }, 1600);
+      this.drone = null;
+      this.droneGain = null;
+      this._droneLfo = null;
+    },
+
+    setBreathe(active) {
+      if (!this.ready) return;
+      // Duck the synth volume during breathe
+      if (this.synth) {
+        this.synth.volume.rampTo(active ? -40 : this.synth.volume.value > -30 ? this.synth.volume.value : -12, 0.8);
+      }
+      if (active) this.startDrone();
+      else this.stopDrone();
+    },
+  };
+  </script>
+
+  <script type="text/babel">
+    const { useState, useRef, useCallback, useEffect } = React;
+
+    const NUM_STEPS = 16;
+    const WORD_SLOTS = [5, 6, 7, 8, 9]; // center 5 columns for word display
+    const MAX_GUESSES = 6;
+
+    const KB_ROWS = [
+      ['Q','W','E','R','T','Y','U','I','O','P'],
+      ['A','S','D','F','G','H','J','K','L'],
+      ['ENTER','Z','X','C','V','B','N','M','BACK'],
+    ];
+
+    const FALLBACK_WORDS = [
+      'CRANE', 'STARE', 'BLEND', 'FROST', 'PLUMB',
+      'GHOST', 'FLAME', 'DRIFT', 'CLOUD', 'PLANT',
+      'BRAVE', 'CHARM', 'FLINT', 'GRAPE', 'HOUSE',
+      'LIGHT', 'MANGO', 'OCEAN', 'PRIDE', 'QUICK',
+      'RAVEN', 'SPINE', 'TORCH', 'VAULT',
+    ];
+
+    const GLYPHS = '\u2702\u2706\u2709\u270E\u270F\u2712\u2714\u2716\u271D\u2721\u2726\u2727\u2729\u272A\u272B\u272C\u272D\u272E\u272F\u2730\u2731\u2732\u2733\u2734\u2735\u2736\u2737\u2738\u2739\u273A\u273B\u273C\u273D\u273E\u273F\u2740\u2741\u2742\u2743\u2744\u2745\u2746\u2747\u2748\u2749\u274A\u274B\u274D\u274F\u2750\u2751\u2752\u2756\u2758\u2759\u275A\u275B\u275C\u275D\u275E\u2761\u2762\u2763\u2764\u2765\u2766\u2767';
+
+    const WORD_GEN_PROMPT = `You are the host of Chaos Typewriter, a word-guessing survival game. You have extreme multiple personality disorder. For each word, adopt a COMPLETELY DIFFERENT personality (be creative and unpredictable — surrealist poet, paranoid pigeon theorist, Victorian ghost, condescending alien, dramatic soap opera narrator, medieval knight speaking corporate jargon, etc).
+
+Your job: pick a common 5-letter English word and introduce it with a HELPFUL hint in character.
+
+Format your response EXACTLY as:
+[Personality Name]
+WORD: XXXXX
+HINT1: a vague, cryptic clue (category or mood)
+HINT2: a clearer clue (strong association or defining trait)
+HINT3: a very direct clue (nearly gives it away — rhyme, first letter, or obvious description)
+
+Rules:
+- The word must be a common English word, all letters A-Z, exactly 5 letters
+- HINT1 should be vague but in the right direction (e.g. "Something elemental, something warm")
+- HINT2 should be clearly helpful (e.g. "You'd find this dancing in a fireplace")
+- HINT3 should nearly give it away (e.g. "Rhymes with BLAME, starts with F")
+- Deliver ALL hints through your personality's warped lens — be funny AND useful
+- Stay fully in character
+- NEVER repeat a personality`;
+
+    const REACT_PROMPT = `You are the host of Chaos Typewriter. You are currently playing a character. React to the player's guess in 1 short sentence (max 15 words), staying fully in character. Be funny and weird.`;
+
+    function useScrambleText(finalText, { duration = 2000, interval = 50 } = {}) {
+      const [display, setDisplay] = useState('');
+      const [done, setDone] = useState(false);
+
+      useEffect(() => {
+        const len = finalText.length;
+        const totalFrames = Math.floor(duration / interval);
+        let frame = 0;
+
+        const timer = setInterval(() => {
+          frame++;
+          const progress = frame / totalFrames;
+          const revealedCount = Math.floor(progress * len);
+
+          let result = '';
+          for (let i = 0; i < len; i++) {
+            if (finalText[i] === ' ') {
+              result += ' ';
+            } else if (i < revealedCount) {
+              result += finalText[i];
+            } else {
+              result += GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+            }
+          }
+          setDisplay(result);
+
+          if (frame >= totalFrames) {
+            clearInterval(timer);
+            setDisplay(finalText);
+            setDone(true);
+          }
+        }, interval);
+
+        return () => clearInterval(timer);
+      }, []);
+
+      return { display, done };
+    }
+
+    function evaluateGuess(guess, answer) {
+      const result = Array(5).fill('absent');
+      const answerChars = answer.split('');
+      const guessChars = guess.split('');
+
+      for (let i = 0; i < 5; i++) {
+        if (guessChars[i] === answerChars[i]) {
+          result[i] = 'correct';
+          answerChars[i] = null;
+          guessChars[i] = null;
+        }
+      }
+
+      for (let i = 0; i < 5; i++) {
+        if (guessChars[i] === null) continue;
+        const idx = answerChars.indexOf(guessChars[i]);
+        if (idx !== -1) {
+          result[i] = 'present';
+          answerChars[idx] = null;
+        }
+      }
+
+      return result;
+    }
+
+    function shuffleArray(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function buildFadeQueue(answer) {
+      const answerLetters = new Set(answer.split(''));
+      const all = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+      const eliminable = all.filter(l => !answerLetters.has(l));
+      return shuffleArray(eliminable);
+    }
+
+    function getRandomFallback(exclude) {
+      const available = FALLBACK_WORDS.filter(w => !exclude.has(w));
+      if (available.length === 0) return FALLBACK_WORDS[Math.floor(Math.random() * FALLBACK_WORDS.length)];
+      return available[Math.floor(Math.random() * available.length)];
+    }
+
+    // ── p5 Sequencer Sketch (instance mode) ──────────────────────
+
+    function createSequencerSketch(containerEl, gameStateRef, callbacksRef) {
+      let particles = [];
+      let canvasW, canvasH;
+      const COL_GAP = 4;
+
+      function computeSize(p) {
+        canvasW = Math.min(containerEl.clientWidth || 600, 700);
+        canvasH = 140;
+      }
+
+      const sketch = (p) => {
+        p.setup = function() {
+          computeSize(p);
+          const canvas = p.createCanvas(canvasW, canvasH);
+          canvas.parent(containerEl);
+        };
+
+        p.windowResized = function() {
+          computeSize(p);
+          p.resizeCanvas(canvasW, canvasH);
+        };
+
+        p.draw = function() {
+          const state = gameStateRef.current;
+          if (!state.started) {
+            p.clear();
+            return;
+          }
+
+          const chaos = state.chaosLevel;
+
+          // Trail effect
+          const trailAlpha = p.lerp(240, 60, chaos);
+          p.background(252, 228, 236, trailAlpha);
+
+          const colW = (canvasW - (NUM_STEPS + 1) * COL_GAP) / NUM_STEPS;
+          const now = p.millis();
+
+          // Advance playhead
+          const bpm = 100 + chaos * 40;
+          const stepInterval = 60000 / bpm / 4;
+
+          if (now - state.lastStepTime > stepInterval) {
+            state.currentStep = (state.currentStep + 1) % NUM_STEPS;
+            state.lastStepTime = now;
+            if (state.nodes[state.currentStep] && !WORD_SLOTS.includes(state.currentStep)) {
+              AudioEngine.playNote(state.currentStep, chaos);
+            }
+          }
+
+          // Draw columns
+          for (let i = 0; i < NUM_STEPS; i++) {
+            const x = COL_GAP + i * (colW + COL_GAP);
+            const isWordSlot = WORD_SLOTS.includes(i);
+            const wordIdx = WORD_SLOTS.indexOf(i);
+            const isActive = state.nodes[i];
+            const isCurrent = i === state.currentStep;
+
+            if (isWordSlot) {
+              // Word slot column
+              const guessResult = state.currentGuessResult;
+              const currentWord = state.currentInput;
+              const letter = wordIdx < currentWord.length ? currentWord[wordIdx] : '';
+              const resultState = guessResult && guessResult[wordIdx];
+
+              // Background
+              let bgR, bgG, bgB, bgA;
+              if (resultState === 'correct') {
+                bgR = 160; bgG = 216; bgB = 192; bgA = 220;
+              } else if (resultState === 'present') {
+                bgR = 232; bgG = 160; bgB = 191; bgA = 220;
+              } else if (resultState === 'absent') {
+                bgR = 186; bgG = 140; bgB = 214; bgA = 60;
+              } else {
+                bgR = 255; bgG = 255; bgB = 255; bgA = isActive ? 100 : 60;
+              }
+
+              // Playhead highlight
+              if (isCurrent) {
+                bgA = Math.min(255, bgA + 60);
+              }
+
+              p.noStroke();
+              p.fill(bgR, bgG, bgB, bgA);
+              p.rect(x, 10, colW, canvasH - 20, 8);
+
+              // Word slot border
+              p.noFill();
+              p.stroke(186, 140, 214, 120);
+              p.strokeWeight(2);
+              p.rect(x, 10, colW, canvasH - 20, 8);
+
+              // Letter
+              if (letter) {
+                p.noStroke();
+                p.fill(74, 63, 107, 230);
+                p.textAlign(p.CENTER, p.CENTER);
+                p.textSize(Math.min(colW * 0.55, 24));
+                p.textStyle(p.BOLD);
+                p.text(letter, x + colW / 2, canvasH / 2);
+              }
+            } else {
+              // Sequencer node column
+              if (isActive) {
+                const pulse = Math.sin(now * 0.004 + i * 0.5) * 0.15 + 1;
+                const r = p.lerp(156, 240, chaos);
+                const g = p.lerp(107, 98, chaos);
+                const b = p.lerp(196, 180, chaos);
+
+                let jx = 0, jy = 0;
+                if (chaos > 0.5) {
+                  const j = (chaos - 0.5) * 4;
+                  jx = p.random(-j, j);
+                  jy = p.random(-j, j);
+                }
+
+                // Glow
+                p.noStroke();
+                p.fill(r, g, b, 30 + chaos * 50);
+                p.rect(x + jx - 4, 5 + jy, colW + 8, canvasH - 10, 10);
+
+                // Bar
+                const barH = (canvasH - 30) * pulse;
+                const barY = (canvasH - barH) / 2;
+                p.fill(r, g, b, 160 + chaos * 60);
+                p.rect(x + jx, barY + jy, colW, barH, 8);
+
+                // Particles
+                if (Math.random() < 0.03 + chaos * 0.06) {
+                  particles.push({
+                    x: x + colW / 2, y: canvasH / 2,
+                    vx: p.random(-1.5, 1.5), vy: p.random(-2, -0.5),
+                    life: 1, decay: p.random(0.015, 0.04),
+                    r, g, b, size: p.random(2, 5)
+                  });
+                }
+              } else {
+                // Inactive
+                p.noStroke();
+                p.fill(186, 140, 214, 35);
+                p.rect(x, canvasH / 2 - 8, colW, 16, 6);
+              }
+
+              // Playhead
+              if (isCurrent) {
+                p.noFill();
+                p.stroke(255, 255, 255, 200);
+                p.strokeWeight(2);
+                p.rect(x - 2, 6, colW + 4, canvasH - 12, 10);
+              }
+            }
+          }
+
+          // Breathe overlay
+          if (state.breatheActive) {
+            p.noStroke();
+            p.fill(102, 187, 106, 15 + Math.sin(now * 0.003) * 10);
+            p.rect(0, 0, canvasW, canvasH, 12);
+          }
+
+          // Particles
+          for (let i = particles.length - 1; i >= 0; i--) {
+            const pt = particles[i];
+            pt.x += pt.vx;
+            pt.y += pt.vy;
+            pt.life -= pt.decay;
+            if (pt.life <= 0) { particles.splice(i, 1); continue; }
+            p.noStroke();
+            p.fill(pt.r, pt.g, pt.b, pt.life * 180);
+            p.ellipse(pt.x, pt.y, pt.size * pt.life);
+          }
+        };
+
+        p.mousePressed = function() {
+          if (!gameStateRef.current.started) return;
+          // Check if click is on a non-word-slot active node
+          const colW = (canvasW - (NUM_STEPS + 1) * COL_GAP) / NUM_STEPS;
+          for (let i = 0; i < NUM_STEPS; i++) {
+            if (WORD_SLOTS.includes(i)) continue;
+            const x = COL_GAP + i * (colW + COL_GAP);
+            if (p.mouseX >= x && p.mouseX <= x + colW && p.mouseY >= 5 && p.mouseY <= canvasH - 5) {
+              if (gameStateRef.current.nodes[i]) {
+                callbacksRef.current.onNodeClick(i);
+                // Burst particles
+                const chaos = gameStateRef.current.chaosLevel;
+                for (let j = 0; j < 8; j++) {
+                  const angle = Math.random() * Math.PI * 2;
+                  const speed = Math.random() * 3 + 1;
+                  particles.push({
+                    x: x + colW / 2, y: canvasH / 2,
+                    vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+                    life: 1, decay: 0.02 + Math.random() * 0.03,
+                    r: 102, g: 187, b: 106, size: 3 + Math.random() * 4
+                  });
+                }
+                return;
+              }
+            }
+          }
+        };
+
+        p.touchStarted = function() {
+          if (!gameStateRef.current.started) return;
+          p.mousePressed();
+          return false;
+        };
+      };
+
+      return new p5(sketch, containerEl);
+    }
+
+    // ── Main App ─────────────────────────────────────────────────
+
+    const DIFFICULTY = {
+      chill: {
+        label: 'Chill', desc: 'No time pressure',
+        fadeMin: 8000, fadeMax: 12000, fadeChaosScale: 0.2,
+        activateMin: 4000, activateBase: 10000, activateScale: 100,
+        creepDelay: 10000, creepRand: 10000, creepProb: 0.008,
+        graceDelay: 12000,
+      },
+      normal: {
+        label: 'Normal', desc: 'Balanced challenge',
+        fadeMin: 4000, fadeMax: 7000, fadeChaosScale: 0.4,
+        activateMin: 2000, activateBase: 6000, activateScale: 150,
+        creepDelay: 6000, creepRand: 8000, creepProb: 0.015,
+        graceDelay: 8000,
+      },
+      chaos: {
+        label: 'Chaos', desc: 'Good luck',
+        fadeMin: 1500, fadeMax: 4000, fadeChaosScale: 0.6,
+        activateMin: 600, activateBase: 3000, activateScale: 200,
+        creepDelay: 2000, creepRand: 4000, creepProb: 0.04,
+        graceDelay: 4000,
+      },
+    };
+
+    function App() {
+      const [setupOpen, setSetupOpen] = useState(false);
+      const [apiKey, setApiKey] = useState('');
+      const [difficulty, setDifficulty] = useState('normal');
+      const [musicVibe, setMusicVibe] = useState('glitchy');
+      const [started, setStarted] = useState(false);
+      const [showGuide, setShowGuide] = useState(false);
+      const [showGameOver, setShowGameOver] = useState(false);
+
+      // Word state
+      const [answer, setAnswer] = useState('');
+      const [currentInput, setCurrentInput] = useState('');
+      const [guessCount, setGuessCount] = useState(0);
+      const [letterStates, setLetterStates] = useState({});
+      const [fadedLetters, setFadedLetters] = useState(new Set());
+      const [guessResult, setGuessResult] = useState(null); // array of 5 states or null
+      const [wordPhase, setWordPhase] = useState('waiting'); // waiting | loading | playing | solved | failed
+
+      // Sequencer state
+      const [nodes, setNodes] = useState(new Array(NUM_STEPS).fill(false));
+      const [chaosLevel, setChaosLevel] = useState(0);
+      const [breatheActive, setBreatheActive] = useState(false);
+      const [breatheCooldown, setBreatheOnCooldown] = useState(false);
+      const [fadePaused, setFadePaused] = useState(false);
+
+      // Hint state — 3 hints per word, revealed at chaos thresholds
+      const [hints, setHints] = useState([]); // [{personality, text}, ...] up to 3
+      const [hintLevel, setHintLevel] = useState(0); // 0, 1, or 2
+      const [currentPersonality, setCurrentPersonality] = useState('');
+
+      // Scoring
+      const [wordsCompleted, setWordsCompleted] = useState(0);
+      const [totalScore, setTotalScore] = useState(0);
+      const [wordStartTime, setWordStartTime] = useState(0);
+      const [wordHistory, setWordHistory] = useState([]); // [{word, solved, score, guesses}]
+
+      // Refs
+      const sequencerRef = useRef(null);
+      const p5Ref = useRef(null);
+      const usedWordsRef = useRef(new Set());
+      const fadeQueueRef = useRef([]);
+      const fadeIndexRef = useRef(0);
+      const fadeTimerRef = useRef(null);
+      const autoActivateTimerRef = useRef(null);
+      const creepBackTimerRef = useRef(null);
+      const silencedAtRef = useRef({});
+      const abortRef = useRef(null);
+
+      const title = useScrambleText('Chaos Typewriter', { duration: 2500, interval: 40 });
+
+      // Shared state ref for p5
+      const gameStateRef = useRef({
+        started: false,
+        nodes: new Array(NUM_STEPS).fill(false),
+        chaosLevel: 0,
+        currentStep: -1,
+        lastStepTime: 0,
+        breatheActive: false,
+        currentInput: '',
+        currentGuessResult: null,
+      });
+
+      const callbacksRef = useRef({
+        onNodeClick: () => {},
+      });
+
+      // Sync state to ref for p5
+      useEffect(() => {
+        gameStateRef.current.started = started;
+        gameStateRef.current.nodes = nodes;
+        gameStateRef.current.chaosLevel = chaosLevel;
+        gameStateRef.current.breatheActive = breatheActive;
+        gameStateRef.current.currentInput = currentInput;
+        gameStateRef.current.currentGuessResult = guessResult;
+      }, [started, nodes, chaosLevel, breatheActive, currentInput, guessResult]);
+
+      // Sync music vibe
+      useEffect(() => {
+        if (started) AudioEngine.setVibe(musicVibe);
+      }, [musicVibe, started]);
+
+      // Initialize p5
+      useEffect(() => {
+        if (sequencerRef.current && !p5Ref.current) {
+          p5Ref.current = createSequencerSketch(sequencerRef.current, gameStateRef, callbacksRef);
+        }
+        return () => {
+          if (p5Ref.current) {
+            p5Ref.current.remove();
+            p5Ref.current = null;
+          }
+        };
+      }, []);
+
+      // Node click callback
+      useEffect(() => {
+        callbacksRef.current.onNodeClick = (index) => {
+          setNodes(prev => {
+            const next = [...prev];
+            next[index] = false;
+            return next;
+          });
+          silencedAtRef.current[index] = Date.now();
+        };
+      }, []);
+
+
+      // Calculate chaos
+      useEffect(() => {
+        const activeCount = nodes.filter(Boolean).length;
+        const target = activeCount / NUM_STEPS;
+        const interval = setInterval(() => {
+          setChaosLevel(prev => prev + (target - prev) * 0.05);
+        }, 50);
+        return () => clearInterval(interval);
+      }, [nodes]);
+
+      // Advance hint level at chaos thresholds (50% → hint 2, 75% → hint 3)
+      useEffect(() => {
+        if (wordPhase !== 'playing' || hints.length === 0) return;
+        const nonWordActive = nodes.filter((a, i) => a && !WORD_SLOTS.includes(i)).length;
+        const maxNW = NUM_STEPS - WORD_SLOTS.length;
+        const chaosPercent = nonWordActive / maxNW * 100;
+        if (chaosPercent >= 75 && hints.length >= 3) {
+          setHintLevel(2);
+        } else if (chaosPercent >= 50 && hints.length >= 2) {
+          setHintLevel(1);
+        }
+      }, [nodes, wordPhase, hints]);
+
+      // Auto-activate nodes — only when actively playing a word
+      useEffect(() => {
+        if (!started || showGameOver || wordPhase !== 'playing') return;
+        const diff = DIFFICULTY[difficulty];
+        const initialDelay = guessCount === 0 ? diff.graceDelay : 0;
+        const startTimer = setTimeout(() => {
+          const tick = () => {
+            const delay = Math.max(diff.activateMin, diff.activateBase - wordsCompleted * diff.activateScale);
+            autoActivateTimerRef.current = setTimeout(() => {
+              setNodes(prev => {
+                const inactive = [];
+                prev.forEach((active, i) => {
+                  if (!active && !WORD_SLOTS.includes(i)) inactive.push(i);
+                });
+                if (inactive.length === 0) return prev;
+                const target = inactive[Math.floor(Math.random() * inactive.length)];
+                const next = [...prev];
+                next[target] = true;
+                return next;
+              });
+              tick();
+            }, delay);
+          };
+          tick();
+        }, initialDelay);
+        return () => {
+          clearTimeout(startTimer);
+          clearTimeout(autoActivateTimerRef.current);
+        };
+      }, [started, wordsCompleted, showGameOver, wordPhase, guessCount, difficulty]);
+
+      // Creep-back for silenced nodes — only during active play
+      useEffect(() => {
+        if (!started || showGameOver || wordPhase !== 'playing') return;
+        creepBackTimerRef.current = setInterval(() => {
+          const now = Date.now();
+          setNodes(prev => {
+            const next = [...prev];
+            let changed = false;
+            for (let i = 0; i < NUM_STEPS; i++) {
+              if (WORD_SLOTS.includes(i)) continue;
+              if (!next[i] && silencedAtRef.current[i]) {
+                const elapsed = now - silencedAtRef.current[i];
+                const cDiff = DIFFICULTY[difficulty];
+                const delay = cDiff.creepDelay + Math.random() * cDiff.creepRand;
+                if (elapsed > delay && Math.random() < cDiff.creepProb) {
+                  next[i] = true;
+                  delete silencedAtRef.current[i];
+                  changed = true;
+                }
+              }
+            }
+            return changed ? next : prev;
+          });
+        }, 500);
+        return () => clearInterval(creepBackTimerRef.current);
+      }, [started, showGameOver, wordPhase, difficulty]);
+
+      // Keyboard fading — use setTimeout chain so chaos changes don't reset the timer
+      const chaosRef = useRef(0);
+      useEffect(() => { chaosRef.current = chaosLevel; }, [chaosLevel]);
+
+      useEffect(() => {
+        if (wordPhase !== 'playing' || fadePaused || !answer) return;
+        let cancelled = false;
+        const tick = () => {
+          const fDiff = DIFFICULTY[difficulty];
+          const delay = Math.max(fDiff.fadeMin, fDiff.fadeMax * (1 - chaosRef.current * fDiff.fadeChaosScale));
+          fadeTimerRef.current = setTimeout(() => {
+            if (cancelled) return;
+            setFadedLetters(prev => {
+              const queue = fadeQueueRef.current;
+              const idx = fadeIndexRef.current;
+              if (idx >= queue.length) return prev;
+              const next = new Set(prev);
+              next.add(queue[idx]);
+              fadeIndexRef.current = idx + 1;
+              return next;
+            });
+            tick();
+          }, delay);
+        };
+        tick();
+        return () => {
+          cancelled = true;
+          clearTimeout(fadeTimerRef.current);
+        };
+      }, [wordPhase, fadePaused, answer, difficulty]);
+
+      // Game over check: all non-word-slot nodes active
+      useEffect(() => {
+        if (!started || showGameOver) return;
+        const nonWordNodes = nodes.filter((active, i) => !WORD_SLOTS.includes(i));
+        const allActive = nonWordNodes.every(Boolean);
+        if (allActive && nonWordNodes.length > 0) {
+          // Give 3 seconds grace
+          const timer = setTimeout(() => {
+            const currentNonWord = [];
+            for (let i = 0; i < NUM_STEPS; i++) {
+              if (!WORD_SLOTS.includes(i)) currentNonWord.push(nodes[i]);
+            }
+            if (currentNonWord.every(Boolean)) {
+              setShowGameOver(true);
+            }
+          }, 3000);
+          return () => clearTimeout(timer);
+        }
+      }, [nodes, started, showGameOver]);
+
+      // Breathe mechanic
+      const triggerBreathe = useCallback(() => {
+        if (breatheCooldown || breatheActive) return;
+        setBreatheActive(true);
+        setFadePaused(true);
+        AudioEngine.setBreathe(true);
+
+        // Silence half the active non-word nodes
+        setNodes(prev => {
+          const next = [...prev];
+          const activeIndices = [];
+          next.forEach((a, i) => { if (a && !WORD_SLOTS.includes(i)) activeIndices.push(i); });
+          const toCalm = Math.ceil(activeIndices.length / 2);
+          const shuffled = shuffleArray(activeIndices);
+          for (let i = 0; i < toCalm; i++) {
+            next[shuffled[i]] = false;
+            silencedAtRef.current[shuffled[i]] = Date.now();
+          }
+          return next;
+        });
+
+        setTimeout(() => {
+          setBreatheActive(false);
+          setFadePaused(false);
+          AudioEngine.setBreathe(false);
+        }, 4000);
+
+        setBreatheOnCooldown(true);
+        setTimeout(() => setBreatheOnCooldown(false), 30000);
+      }, [breatheCooldown, breatheActive]);
+
+      // Descriptive fallback hints for each word
+      const FALLBACK_HINTS = {
+        'CRANE': [
+          'Something tall. Could be alive, could be made of steel.',
+          'A bird with long legs — or a machine on a construction site.',
+          'Rhymes with PLANE, starts with C.',
+        ],
+        'STARE': [
+          'It involves your eyes. Intensity is key.',
+          'What you do when you can\'t look away. Unblinking.',
+          'Rhymes with CARE, starts with ST.',
+        ],
+        'BLEND': [
+          'About combining things. Think kitchen.',
+          'Mix things together until they become one. Smoothies need this.',
+          'Starts with BL, ends with END.',
+        ],
+        'FROST': [
+          'Something cold. You see it in winter.',
+          'The icy coating on windows on a cold morning.',
+          'Rhymes with LOST, starts with FR.',
+        ],
+        'PLUMB': [
+          'Related to straightness, or pipes.',
+          'Perfectly vertical — or the person who fixes your sink.',
+          'Starts with PL, has a silent B at the end.',
+        ],
+        'GHOST': [
+          'Something spooky. Not quite alive.',
+          'A spirit that haunts old houses. Says "boo!"',
+          'Rhymes with MOST, starts with GH.',
+        ],
+        'FLAME': [
+          'Something warm and bright. Elemental.',
+          'The dancing orange light at the tip of a candle.',
+          'Rhymes with BLAME, starts with FL.',
+        ],
+        'DRIFT': [
+          'About movement without control.',
+          'To float slowly without direction, like snow piling up.',
+          'Starts with DR, ends with IFT.',
+        ],
+        'CLOUD': [
+          'Look up. Way up.',
+          'Fluffy white shapes in the sky. Sometimes brings rain.',
+          'Rhymes with LOUD, starts with CL.',
+        ],
+        'PLANT': [
+          'Something alive but rooted in place.',
+          'A green living thing in soil. Needs water and sunlight.',
+          'Rhymes with CANT, starts with PL.',
+        ],
+        'BRAVE': [
+          'A quality of heroes.',
+          'Courageous and fearless. The opposite of cowardly.',
+          'Rhymes with CAVE, starts with BR.',
+        ],
+        'CHARM': [
+          'Something magnetic about a person.',
+          'An irresistible appeal, or a trinket on a bracelet.',
+          'Rhymes with FARM, starts with CH.',
+        ],
+        'FLINT': [
+          'Hard and ancient. Makes something useful.',
+          'A stone that creates sparks when struck.',
+          'Starts with FL, rhymes with MINT.',
+        ],
+        'GRAPE': [
+          'Something you eat. Grows in clusters.',
+          'A small round fruit on a vine. Makes wine.',
+          'Rhymes with TAPE, starts with GR.',
+        ],
+        'HOUSE': [
+          'Where life happens. Everyone needs one.',
+          'Where you live. Rooms, a roof, a door.',
+          'Rhymes with MOUSE, starts with H.',
+        ],
+        'LIGHT': [
+          'Without it, you see nothing.',
+          'What lets you see in the dark. The sun gives plenty.',
+          'Rhymes with NIGHT, starts with L.',
+        ],
+        'MANGO': [
+          'Tropical and sweet.',
+          'An orange fruit, popular in smoothies and lassi.',
+          'Starts with MAN, ends with GO.',
+        ],
+        'OCEAN': [
+          'Vast and blue. Covers most of Earth.',
+          'The enormous body of salt water between continents.',
+          'Starts with O, ends with AN. 5 letters.',
+        ],
+        'PRIDE': [
+          'A feeling, or a group of animals.',
+          'Deep satisfaction — or what you call a group of lions.',
+          'Rhymes with RIDE, starts with PR.',
+        ],
+        'QUICK': [
+          'The opposite of slow.',
+          'Fast, speedy, without delay.',
+          'Starts with QU, rhymes with STICK.',
+        ],
+        'RAVEN': [
+          'A dark bird. Literary fame.',
+          'A large intelligent black bird. Poe wrote about one.',
+          'Starts with R, rhymes with HAVEN.',
+        ],
+        'SPINE': [
+          'Something structural. In your body and in books.',
+          'The column of bones down your back. Also the edge of a book.',
+          'Rhymes with MINE, starts with SP.',
+        ],
+        'TORCH': [
+          'Portable brightness.',
+          'A light you carry in the dark. Flashlight in the US.',
+          'Rhymes with PORCH, starts with T.',
+        ],
+        'VAULT': [
+          'Security or athletics.',
+          'A secure room for valuables — or a gymnastic jump.',
+          'Rhymes with SALT, starts with V.',
+        ],
+      };
+
+      function generateFallbackHints(word) {
+        const fb = FALLBACK_HINTS[word];
+        if (fb) return fb;
+        // Generic 3-level hints
+        const vowels = word.split('').filter(l => 'AEIOU'.includes(l)).length;
+        return [
+          `${vowels} vowel${vowels !== 1 ? 's' : ''}. Think carefully.`,
+          `It starts with a letter from the ${word[0] <= 'M' ? 'first' : 'second'} half of the alphabet.`,
+          `Starts with "${word[0]}", ends with "${word[4]}".`,
+        ];
+      }
+
+      const FALLBACK_PERSONALITIES = [
+        'Mysterious Oracle', 'Bored Librarian', 'Excitable Squirrel',
+        'Grumpy Lighthouse Keeper', 'Time-Traveling Barista', 'Philosophical Cactus',
+        'Overly Dramatic Narrator', 'Confused Pigeon', 'Sarcastic Fortune Cookie',
+      ];
+
+      // Fetch word from AI
+      const fetchNextWord = useCallback(async () => {
+        setWordPhase('loading');
+        setCurrentInput('');
+        setGuessCount(0);
+        setLetterStates({});
+        setFadedLetters(new Set());
+        setGuessResult(null);
+        fadeIndexRef.current = 0;
+
+        let word, personality, hint1, hint2, hint3;
+
+        if (apiKey) {
+          try {
+            if (abortRef.current) abortRef.current.abort();
+            const controller = new AbortController();
+            abortRef.current = controller;
+
+            const res = await fetch('https://api.anthropic.com/v1/messages', {
+              method: 'POST',
+              signal: controller.signal,
+              headers: {
+                'content-type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true',
+              },
+              body: JSON.stringify({
+                model: 'claude-haiku-4-5-20251001',
+                max_tokens: 250,
+                system: WORD_GEN_PROMPT,
+                messages: [{ role: 'user', content: `Give me word #${wordsCompleted + 1}. Previous words used: ${[...usedWordsRef.current].join(', ') || 'none'}` }],
+              }),
+            });
+
+            if (!res.ok) throw new Error(`API ${res.status}`);
+            const data = await res.json();
+            const reply = data.content?.[0]?.text || '';
+
+            // Parse response
+            const persMatch = reply.match(/^\[([^\]]+)\]/);
+            personality = persMatch ? persMatch[1] : 'Mystery Host';
+
+            const wordMatch = reply.match(/WORD:\s*([A-Z]{5})/i);
+            word = wordMatch ? wordMatch[1].toUpperCase() : null;
+
+            const h1 = reply.match(/HINT1:\s*(.+)/i);
+            const h2 = reply.match(/HINT2:\s*(.+)/i);
+            const h3 = reply.match(/HINT3:\s*(.+)/i);
+            hint1 = h1 ? h1[1].trim() : null;
+            hint2 = h2 ? h2[1].trim() : null;
+            hint3 = h3 ? h3[1].trim() : null;
+
+            if (!word || word.length !== 5 || !/^[A-Z]+$/.test(word)) {
+              throw new Error('Bad word from AI');
+            }
+          } catch (e) {
+            if (e.name === 'AbortError') return;
+            word = null;
+          }
+        }
+
+        // Fallback: pick a word and generate hints + random personality
+        if (!word) {
+          word = getRandomFallback(usedWordsRef.current);
+          if (!personality) {
+            personality = FALLBACK_PERSONALITIES[Math.floor(Math.random() * FALLBACK_PERSONALITIES.length)];
+          }
+          const fb = generateFallbackHints(word);
+          hint1 = hint1 || fb[0];
+          hint2 = hint2 || fb[1];
+          hint3 = hint3 || fb[2];
+        }
+
+        usedWordsRef.current.add(word);
+        setAnswer(word);
+        fadeQueueRef.current = buildFadeQueue(word);
+        fadeIndexRef.current = 0;
+        setCurrentPersonality(personality);
+        setHintLevel(0);
+
+        // Set all 3 hints
+        const wordHints = [
+          { personality, text: hint1 || 'Good luck...' },
+          { personality, text: hint2 || 'Getting warmer...' },
+          { personality, text: hint3 || `It starts with ${word[0]}...` },
+        ];
+        setHints(wordHints);
+
+        // Brief pause so player can read the hint before play begins
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        setWordStartTime(Date.now());
+        setWordPhase('playing');
+      }, [apiKey, wordsCompleted]);
+
+      // React to guess via AI
+      const aiReactToGuess = useCallback(async (guess, wasCorrect) => {
+        if (!apiKey || !currentPersonality) return;
+        try {
+          const res = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              'x-api-key': apiKey,
+              'anthropic-version': '2023-06-01',
+              'anthropic-dangerous-direct-browser-access': 'true',
+            },
+            body: JSON.stringify({
+              model: 'claude-haiku-4-5-20251001',
+              max_tokens: 60,
+              system: REACT_PROMPT + ` You are [${currentPersonality}]. The answer is "${answer}". The player guessed "${guess}". ${wasCorrect ? 'They got it right!' : 'They got it wrong.'}`,
+              messages: [{ role: 'user', content: 'React.' }],
+            }),
+          });
+          if (!res.ok) return;
+          const data = await res.json();
+          const reply = (data.content?.[0]?.text || '').replace(/^\[.*?\]\s*/, '').trim();
+          if (reply) {
+            setHints(prev => {
+              const next = [...prev];
+              if (next[hintLevel]) next[hintLevel] = { ...next[hintLevel], text: reply };
+              return next;
+            });
+          }
+        } catch {}
+      }, [apiKey, currentPersonality, answer, hintLevel]);
+
+      // Submit guess
+      const submitGuess = useCallback(() => {
+        if (currentInput.length !== 5 || wordPhase !== 'playing') return;
+
+        const guess = currentInput.toUpperCase();
+        const result = evaluateGuess(guess, answer);
+        setGuessResult(result);
+        const newGuessCount = guessCount + 1;
+        setGuessCount(newGuessCount);
+
+        // Update letter states
+        const priority = { correct: 3, present: 2, absent: 1 };
+        setLetterStates(prev => {
+          const next = { ...prev };
+          for (let i = 0; i < 5; i++) {
+            const letter = guess[i];
+            const state = result[i];
+            if (!next[letter] || priority[state] > priority[next[letter]]) {
+              next[letter] = state;
+            }
+          }
+          return next;
+        });
+
+        const isCorrect = guess === answer;
+
+        // AI reaction (fire and forget)
+        aiReactToGuess(guess, isCorrect);
+
+        // Delay to show result, then proceed
+        setTimeout(() => {
+          if (isCorrect) {
+            // Solved!
+            const elapsed = (Date.now() - wordStartTime) / 1000;
+            const score = Math.max(0, 1000 - Math.floor(elapsed * 10) - (newGuessCount * 50));
+            setTotalScore(prev => prev + score);
+            setWordsCompleted(prev => prev + 1);
+            setWordPhase('solved');
+
+            // Silence 3-5 nodes based on speed
+            const speedBonus = newGuessCount <= 2 ? 2 : newGuessCount <= 4 ? 1 : 0;
+            const toSilence = 3 + speedBonus;
+            setNodes(prev => {
+              const next = [...prev];
+              const activeIndices = [];
+              next.forEach((a, i) => { if (a && !WORD_SLOTS.includes(i)) activeIndices.push(i); });
+              const shuffled = shuffleArray(activeIndices);
+              for (let i = 0; i < Math.min(toSilence, shuffled.length); i++) {
+                next[shuffled[i]] = false;
+                silencedAtRef.current[shuffled[i]] = Date.now();
+              }
+              return next;
+            });
+
+            setWordHistory(prev => [...prev, { word: answer, solved: true, score, guesses: newGuessCount }]);
+            setHints([]);
+            setHintLevel(0);
+
+            // Next word after a pause
+            setTimeout(() => {
+              setGuessResult(null);
+              setCurrentInput('');
+              fetchNextWord();
+            }, 1500);
+
+          } else if (newGuessCount >= MAX_GUESSES) {
+            // Failed
+            setWordPhase('failed');
+
+            // Activate 2 more nodes
+            setNodes(prev => {
+              const next = [...prev];
+              const inactive = [];
+              next.forEach((a, i) => { if (!a && !WORD_SLOTS.includes(i)) inactive.push(i); });
+              const shuffled = shuffleArray(inactive);
+              for (let i = 0; i < Math.min(2, shuffled.length); i++) {
+                next[shuffled[i]] = true;
+              }
+              return next;
+            });
+
+            setWordHistory(prev => [...prev, { word: answer, solved: false, score: 0, guesses: newGuessCount }]);
+            setHints([]);
+            setHintLevel(0);
+
+            // Next word after a pause
+            setTimeout(() => {
+              setGuessResult(null);
+              setCurrentInput('');
+              fetchNextWord();
+            }, 2000);
+
+          } else {
+            // Clear input for next guess, keep result briefly
+            setTimeout(() => {
+              setGuessResult(null);
+              setCurrentInput('');
+            }, 800);
+          }
+        }, 600);
+      }, [currentInput, wordPhase, answer, guessCount, aiReactToGuess, fetchNextWord, wordStartTime]);
+
+      // Handle key
+      const handleKey = useCallback((key) => {
+        if (wordPhase !== 'playing' || guessResult) return;
+
+        if (key === 'ENTER') {
+          if (currentInput.length === 5) submitGuess();
+        } else if (key === 'BACK' || key === 'BACKSPACE') {
+          setCurrentInput(prev => prev.slice(0, -1));
+        } else if (/^[A-Z]$/.test(key) && currentInput.length < 5) {
+          if (fadedLetters.has(key) && !letterStates[key]) return;
+          setCurrentInput(prev => prev + key);
+        }
+      }, [wordPhase, guessResult, currentInput, submitGuess, fadedLetters, letterStates]);
+
+      // Physical keyboard
+      useEffect(() => {
+        const handler = (e) => {
+          if (e.ctrlKey || e.metaKey || e.altKey) return;
+          const key = e.key.toUpperCase();
+          if (key === 'ENTER' || key === 'BACKSPACE' || (/^[A-Z]$/.test(key) && key.length === 1)) {
+            e.preventDefault();
+            handleKey(key);
+          }
+          // Spacebar for breathe
+          if (e.key === ' ') {
+            e.preventDefault();
+            triggerBreathe();
+          }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+      }, [handleKey, triggerBreathe]);
+
+      // Start game
+      const handleStart = useCallback(async () => {
+        await AudioEngine.init();
+        AudioEngine.setVibe(musicVibe);
+        setStarted(true);
+        gameStateRef.current.lastStepTime = performance.now();
+
+        // Seed 3 random active nodes
+        const nonWord = [];
+        for (let i = 0; i < NUM_STEPS; i++) {
+          if (!WORD_SLOTS.includes(i)) nonWord.push(i);
+        }
+        const shuffled = shuffleArray(nonWord);
+        setNodes(prev => {
+          const next = [...prev];
+          for (let i = 0; i < 3; i++) next[shuffled[i]] = true;
+          return next;
+        });
+
+        // Show guide on first visit
+        if (!localStorage.getItem('chaos-typewriter-guide-seen')) {
+          setShowGuide(true);
+          localStorage.setItem('chaos-typewriter-guide-seen', '1');
+        }
+
+        fetchNextWord();
+      }, [fetchNextWord, musicVibe]);
+
+      // Restart
+      const handleRestart = useCallback(() => {
+        setShowGameOver(false);
+        setNodes(new Array(NUM_STEPS).fill(false));
+        setChaosLevel(0);
+        setWordsCompleted(0);
+        setTotalScore(0);
+        setWordHistory([]);
+        setHints([]);
+        setHintLevel(0);
+        usedWordsRef.current = new Set();
+        silencedAtRef.current = {};
+
+        const nonWord = [];
+        for (let i = 0; i < NUM_STEPS; i++) {
+          if (!WORD_SLOTS.includes(i)) nonWord.push(i);
+        }
+        const shuffled = shuffleArray(nonWord);
+        setNodes(prev => {
+          const next = new Array(NUM_STEPS).fill(false);
+          for (let i = 0; i < 3; i++) next[shuffled[i]] = true;
+          return next;
+        });
+
+        fetchNextWord();
+      }, [fetchNextWord]);
+
+      const activeCount = nodes.filter((a, i) => a && !WORD_SLOTS.includes(i)).length;
+      const maxNonWord = NUM_STEPS - WORD_SLOTS.length;
+
+      return (
+        <>
+          <nav>
+            <a href="index.html">&larr; Back to all projects</a>
+            <div className="nav-controls">
+              <button className="help-btn" onClick={() => setShowGuide(true)} title="How to Play">?</button>
+              <button className="help-btn" onClick={() => setSetupOpen(!setupOpen)} title="Settings" style={{fontSize: '1rem'}}>&#x2699;&#xFE0F;</button>
+            </div>
+          </nav>
+          <div className={`setup-panel ${setupOpen ? 'open' : ''}`}>
+            <div className="setup-row">
+              <label>Difficulty</label>
+              <div className="difficulty-options">
+                {Object.entries(DIFFICULTY).map(([key, val]) => (
+                  <button
+                    key={key}
+                    className={`diff-btn ${difficulty === key ? 'active' : ''}`}
+                    onClick={() => setDifficulty(key)}
+                  >
+                    <span className="diff-label">{val.label}</span>
+                    <span className="diff-desc">{val.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="setup-row">
+              <label>Music</label>
+              <div className="difficulty-options">
+                {Object.entries(VIBES).map(([key, val]) => (
+                  <button
+                    key={key}
+                    className={`diff-btn ${musicVibe === key ? 'active' : ''}`}
+                    onClick={() => setMusicVibe(key)}
+                  >
+                    <span className="diff-label">{val.label}</span>
+                    <span className="diff-desc">{val.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="setup-row">
+              <label>API Key</label>
+              <input
+                type="password"
+                placeholder="sk-ant-... (optional — uses fallback words without it)"
+                value={apiKey}
+                onChange={e => setApiKey(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="header">
+            <h1>{title.display}</h1>
+            <p className="byline">Vibeshift BLR Combo</p>
+          </div>
+
+          {/* Speech bubble hint — above sequencer */}
+          <div className="hint-bubble-wrap">
+            {hints.length > 0 && hints[hintLevel] ? (
+              <div className="hint-bubble">
+                <span className="hint-personality">{hints[hintLevel].personality}</span>
+                <span className="hint-text">{hints[hintLevel].text}</span>
+              </div>
+            ) : wordPhase === 'loading' ? (
+              <div className="hint-bubble waiting">
+                <span className="hint-waiting">thinking of a word...</span>
+              </div>
+            ) : wordPhase === 'solved' ? (
+              <div className="hint-bubble">
+                <span className="hint-waiting">nice! next word coming...</span>
+              </div>
+            ) : wordPhase === 'failed' ? (
+              <div className="hint-bubble">
+                <span className="hint-waiting">the word was {answer}... next one coming...</span>
+              </div>
+            ) : null}
+          </div>
+
+          <div id="sequencer-container" ref={sequencerRef}></div>
+
+          <div className="game-area">
+            <div className="status-msg">
+              {wordPhase === 'playing' && `Guess ${guessCount + 1}/${MAX_GUESSES} \u2022 Score: ${totalScore} \u2022 Chaos: ${Math.round(activeCount / maxNonWord * 100)}%`}
+              {wordPhase === 'solved' && <span className="win">Solved!</span>}
+              {wordPhase === 'failed' && <span className="lose">The word was {answer}</span>}
+              {wordPhase === 'loading' && 'Your game master is thinking...'}
+              {wordPhase === 'waiting' && ''}
+            </div>
+
+            <div className="breathe-hint">
+              {breatheActive ? 'breathing...' : breatheCooldown ? 'breathe recharging...' : 'press space to breathe'}
+            </div>
+
+            <div className="keyboard">
+              {KB_ROWS.map((row, ri) => (
+                <div key={ri} className="kb-row">
+                  {row.map(key => {
+                    let cls = 'key';
+                    if (key === 'ENTER' || key === 'BACK') cls += ' wide';
+                    if (letterStates[key]) cls += ` ${letterStates[key]}`;
+                    else if (fadedLetters.has(key)) cls += ' faded';
+                    return (
+                      <button
+                        key={key}
+                        className={cls}
+                        onClick={() => handleKey(key)}
+                      >
+                        {key === 'BACK' ? '\u232B' : key}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Start Overlay */}
+          {!started && (
+            <div className="start-overlay" onClick={handleStart}>
+              <div className="start-box" onClick={e => e.stopPropagation()}>
+                <h2>Chaos Typewriter</h2>
+                <p>The sequencer builds chaos. Solve words to push it back. The AI picks each word and taunts you in a different personality. How long can you survive?</p>
+                <button className="btn" onClick={handleStart}>Click to begin</button>
+              </div>
+            </div>
+          )}
+
+          {/* How to Play */}
+          {showGuide && (
+            <div className="modal-overlay" onClick={() => setShowGuide(false)}>
+              <div className="modal guide" onClick={e => e.stopPropagation()}>
+                <h2>How to Play</h2>
+                <p>Guess <strong>5-letter words</strong> to survive. The sequencer nodes build chaos — solve words to silence them.</p>
+                <p>Your letters appear in the <strong>center 5 columns</strong> of the sequencer strip. Type and press Enter to guess.</p>
+                <div className="twist">
+                  <strong>The twist:</strong> Keyboard letters fade over time, nodes auto-activate and creep back, and the AI game master gives cryptic hints in a different personality each round.
+                </div>
+                <p><strong>Breathe</strong> (spacebar): Silences half the nodes and pauses fading. 30s cooldown.</p>
+                <p><strong>Game over</strong> when all sequencer nodes are active.</p>
+                <button className="btn" onClick={() => setShowGuide(false)}>Got it</button>
+              </div>
+            </div>
+          )}
+
+          {/* Game Over */}
+          {showGameOver && (
+            <div className="modal-overlay">
+              <div className="modal">
+                <div className="modal-icon">{'\uD83C\uDF2A\uFE0F'}</div>
+                <h2>Chaos Wins!</h2>
+                {answer && wordPhase !== 'solved' && (
+                  <div className="current-word-reveal">
+                    The word was: {answer}
+                  </div>
+                )}
+                <div className="modal-stats">
+                  <div className="modal-stat">
+                    <span className="stat-value">{totalScore}</span>
+                    <span className="stat-label">Score</span>
+                  </div>
+                  <div className="modal-stat">
+                    <span className="stat-value">{wordsCompleted}</span>
+                    <span className="stat-label">Solved</span>
+                  </div>
+                  <div className="modal-stat">
+                    <span className="stat-value">{wordHistory.length + (wordPhase !== 'solved' && answer ? 1 : 0)}</span>
+                    <span className="stat-label">Total</span>
+                  </div>
+                </div>
+                {(wordHistory.length > 0 || answer) && (
+                  <div className="word-list">
+                    {wordHistory.map((w, i) => (
+                      <div key={i} className="word-item">
+                        <span className="word-text">{w.word}</span>
+                        <span className={`word-badge ${w.solved ? 'solved' : 'missed'}`}>
+                          {w.solved ? `+${w.score}` : 'missed'}
+                        </span>
+                      </div>
+                    ))}
+                    {answer && wordPhase !== 'solved' && (
+                      <div className="word-item">
+                        <span className="word-text">{answer}</span>
+                        <span className="word-badge missed">in progress</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <button className="btn" onClick={handleRestart}>Play Again</button>
+              </div>
+            </div>
+          )}
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

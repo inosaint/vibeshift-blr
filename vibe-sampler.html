@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vibe Sampler - Vibeshift BLR</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta name="description" content="A 16-step circular sequencer about intrusive thoughts. Notes auto-appear and creep back when silenced. The more you suppress, the faster they return. Click breathe for a moment of calm — but there's no winning, only managing.">
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Quicksand', 'Nunito', 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #fce4ec 0%, #e8eaf6 25%, #e0f7fa 50%, #f3e5f5 75%, #fff9c4 100%);
+      background-attachment: fixed;
+      color: #4a3f6b;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    nav {
+      padding: 0.75rem 1.5rem;
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(200, 160, 220, 0.3);
+    }
+
+    nav a {
+      color: #9c6bc4;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    nav a:hover { color: #7b40a8; text-decoration: underline; }
+
+    .header {
+      padding: 0.75rem 1.5rem 0.25rem;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #f06292, #ba68c8, #7e57c2, #42a5f5, #26c6da, #66bb6a, #fdd835, #ff7043);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: rainbow-shift 6s ease infinite;
+    }
+
+    .header .byline {
+      font-size: 0.95rem;
+      color: #b07cd8;
+      font-weight: 500;
+      margin-top: 0.25rem;
+    }
+
+    @keyframes rainbow-shift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    #sequencer-container {
+      display: flex;
+      justify-content: center;
+      padding: 0.5rem 0 1rem;
+    }
+
+    #sequencer-container canvas {
+      display: block;
+    }
+
+    #click-to-start {
+      position: fixed;
+      inset: 0;
+      background: rgba(40, 20, 60, 0.45);
+      backdrop-filter: blur(4px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      cursor: pointer;
+      animation: fade-in 0.3s ease;
+    }
+
+    #click-to-start .start-box {
+      background: linear-gradient(135deg, #fce4ec 0%, #e8eaf6 25%, #e0f7fa 50%, #f3e5f5 75%, #fff9c4 100%);
+      border: 1px solid rgba(200, 160, 220, 0.35);
+      border-radius: 20px;
+      padding: 2rem 2.5rem;
+      text-align: center;
+      max-width: 340px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(100, 60, 140, 0.15);
+    }
+
+    #click-to-start .start-box h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #4a3f6b;
+      margin-bottom: 0.5rem;
+    }
+
+    #click-to-start .start-box p {
+      font-size: 0.85rem;
+      color: #7a6a9a;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+
+    #click-to-start .start-box .start-btn {
+      padding: 0.6rem 1.5rem;
+      border-radius: 10px;
+      border: 2px solid rgba(186, 140, 214, 0.3);
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(6px);
+      color: #9c6bc4;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    #click-to-start .start-box .start-btn:hover {
+      background: rgba(255, 255, 255, 0.7);
+      border-color: #c084e0;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">&larr; Back to all projects</a>
+  </nav>
+
+  <div class="header">
+    <h1>Intrusive Thoughts Loop</h1>
+    <p class="byline">with Upendra Vaddadi</p>
+  </div>
+
+  <div id="sequencer-container"></div>
+
+  <div id="click-to-start">
+    <div class="start-box">
+      <h2>Intrusive Thoughts Loop</h2>
+      <p>A circular sequencer where thoughts auto-appear. Click to silence them, but they creep back. More you suppress, faster they return.</p>
+      <button class="start-btn">Click to begin</button>
+    </div>
+  </div>
+
+  <script>
+  // ── Audio Engine ──────────────────────────────────────────────
+  const AudioEngine = {
+    ctx: null,
+    masterGain: null,
+    frequencies: [],
+
+    init() {
+      if (this.ctx) return;
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      this.masterGain = this.ctx.createGain();
+      this.masterGain.gain.value = 0.3;
+      this.masterGain.connect(this.ctx.destination);
+      this.buildScale();
+    },
+
+    buildScale() {
+      // A minor pentatonic across 2 octaves: A C D E G
+      const baseFreq = 220; // A3
+      const semitoneOffsets = [0, 3, 5, 7, 10, 12, 15, 17, 19, 22, 24, 27, 29, 31, 34, 36];
+      this.frequencies = semitoneOffsets.map(s => baseFreq * Math.pow(2, s / 12));
+    },
+
+    // Meditative drone — a gentle A3 + E4 fifth with slow LFO breathing
+    _droneOscs: null,
+    _droneGain: null,
+
+    startDrone() {
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+
+      this._droneGain = this.ctx.createGain();
+      this._droneGain.gain.setValueAtTime(0, now);
+      this._droneGain.gain.linearRampToValueAtTime(0.18, now + 1.2);
+      this._droneGain.connect(this.ctx.destination); // bypass master so it's independent
+
+      // Root (A3 = 220Hz) + fifth (E4 = 329.6Hz) + octave (A4 = 440Hz, very quiet)
+      const droneFreqs = [220, 329.63, 440];
+      const droneVols = [0.5, 0.35, 0.15];
+      this._droneOscs = droneFreqs.map((freq, i) => {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        g.gain.setValueAtTime(droneVols[i], now);
+        osc.connect(g);
+        g.connect(this._droneGain);
+        osc.start(now);
+        return osc;
+      });
+
+      // Slow LFO on drone gain for breathing feel (~4s cycle)
+      this._droneLfo = this.ctx.createOscillator();
+      this._droneLfoGain = this.ctx.createGain();
+      this._droneLfo.type = 'sine';
+      this._droneLfo.frequency.setValueAtTime(0.25, now); // 4s cycle
+      this._droneLfoGain.gain.setValueAtTime(0.06, now);
+      this._droneLfo.connect(this._droneLfoGain);
+      this._droneLfoGain.connect(this._droneGain.gain);
+      this._droneLfo.start(now);
+    },
+
+    stopDrone() {
+      if (!this.ctx || !this._droneOscs) return;
+      const now = this.ctx.currentTime;
+      // Fade out gently
+      this._droneGain.gain.cancelScheduledValues(now);
+      this._droneGain.gain.setValueAtTime(this._droneGain.gain.value, now);
+      this._droneGain.gain.linearRampToValueAtTime(0, now + 1.5);
+      // Stop oscillators after fade
+      const oscs = this._droneOscs;
+      const lfo = this._droneLfo;
+      setTimeout(() => {
+        oscs.forEach(o => { try { o.stop(); } catch(e) {} });
+        try { lfo.stop(); } catch(e) {}
+      }, 1600);
+      this._droneOscs = null;
+    },
+
+    setBreathe(active) {
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      // Fade sequencer notes to near-silence, bring in the drone
+      this.masterGain.gain.cancelScheduledValues(now);
+      this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
+      this.masterGain.gain.linearRampToValueAtTime(active ? 0.03 : 0.3, now + 0.8);
+
+      if (active) this.startDrone();
+      else this.stopDrone();
+    },
+
+    playNote(stepIndex, chaosLevel) {
+      if (!this.ctx || stepIndex < 0 || stepIndex >= this.frequencies.length) return;
+      const now = this.ctx.currentTime;
+      const freq = this.frequencies[stepIndex];
+
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      // Wave type shifts with chaos
+      if (chaosLevel < 0.33) osc.type = 'sine';
+      else if (chaosLevel < 0.66) osc.type = 'triangle';
+      else osc.type = 'sawtooth';
+
+      osc.frequency.setValueAtTime(freq, now);
+
+      // Envelope: 20ms attack, 300ms decay
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.25, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(now);
+      osc.stop(now + 0.35);
+    }
+  };
+
+  // ── p5.js Sketch ─────────────────────────────────────────────
+  const NUM_STEPS = 16;
+  let steps = [];
+  let currentStep = -1;
+  let chaosLevel = 0;
+  let breatheActive = false;
+  let breatheStart = 0;
+  const BREATHE_DURATION = 4000;
+  let particles = [];
+  let started = false;
+  let lastStepTime = 0;
+  let lastAutoPopTime = 0;
+  let silenceCount = 0;
+  let ringRadius;
+  let centerX, centerY;
+  let canvasW, canvasH;
+
+  function setup() {
+    computeSize();
+    const canvas = createCanvas(canvasW, canvasH);
+    canvas.parent('sequencer-container');
+    textFont('Quicksand');
+    initSteps();
+    // Seed 3 random active nodes
+    const indices = shuffle([...Array(NUM_STEPS).keys()]).slice(0, 3);
+    indices.forEach(i => {
+      steps[i].active = true;
+      steps[i].activatedAt = millis();
+    });
+  }
+
+  function computeSize() {
+    canvasW = min(windowWidth - 20, 700);
+    canvasH = min(windowHeight - 180, 600);
+    canvasH = max(canvasH, 350);
+    centerX = canvasW / 2;
+    centerY = canvasH / 2;
+    ringRadius = min(canvasW, canvasH) * 0.35;
+  }
+
+  function initSteps() {
+    steps = [];
+    for (let i = 0; i < NUM_STEPS; i++) {
+      const angle = map(i, 0, NUM_STEPS, -HALF_PI, TWO_PI - HALF_PI);
+      steps.push({
+        index: i,
+        active: false,
+        silencedAt: 0,
+        creepBackDelay: random(2000, 6000),
+        angle: angle,
+        x: centerX + cos(angle) * ringRadius,
+        y: centerY + sin(angle) * ringRadius,
+        pulsePhase: random(TWO_PI),
+        activatedAt: 0
+      });
+    }
+  }
+
+  function repositionSteps() {
+    for (let i = 0; i < NUM_STEPS; i++) {
+      const angle = map(i, 0, NUM_STEPS, -HALF_PI, TWO_PI - HALF_PI);
+      steps[i].angle = angle;
+      steps[i].x = centerX + cos(angle) * ringRadius;
+      steps[i].y = centerY + sin(angle) * ringRadius;
+    }
+  }
+
+  function windowResized() {
+    computeSize();
+    resizeCanvas(canvasW, canvasH);
+    repositionSteps();
+  }
+
+  function draw() {
+    if (!started) {
+      background(0, 0);
+      return;
+    }
+
+    // Trail effect increases with chaos
+    const trailAlpha = lerp(255, 40, chaosLevel);
+    background(252, 228, 236, trailAlpha);
+
+    const now = millis();
+    const activeCount = steps.filter(s => s.active).length;
+
+    // Breathe check
+    if (breatheActive && now - breatheStart > BREATHE_DURATION) {
+      breatheActive = false;
+      AudioEngine._breathing = false;
+      AudioEngine.setBreathe(false);
+    }
+
+    // BPM: base 100, +40 at max chaos, halved during breathe
+    let bpm = 100 + chaosLevel * 40;
+    if (breatheActive) bpm *= 0.5;
+    const stepInterval = 60000 / bpm / 4; // 16th notes
+
+    // Advance playhead
+    if (now - lastStepTime > stepInterval) {
+      currentStep = (currentStep + 1) % NUM_STEPS;
+      lastStepTime = now;
+      if (steps[currentStep].active) {
+        AudioEngine.playNote(currentStep, chaosLevel);
+      }
+    }
+
+    // ── Draw ring ──
+    noFill();
+    stroke(186, 140, 214, 60);
+    strokeWeight(2);
+    ellipse(centerX, centerY, ringRadius * 2, ringRadius * 2);
+
+    // ── Draw playhead line ──
+    if (currentStep >= 0) {
+      const s = steps[currentStep];
+      stroke(255, 255, 255, 180);
+      strokeWeight(2);
+      line(centerX, centerY, s.x, s.y);
+    }
+
+    // ── Draw step nodes ──
+    for (let i = 0; i < NUM_STEPS; i++) {
+      const s = steps[i];
+      const isCurrent = i === currentStep;
+
+      if (s.active) {
+        // Pulsing size
+        const pulse = sin(now * 0.004 + s.pulsePhase) * 0.3 + 1;
+        const baseSize = 20 * pulse;
+
+        // Color shifts purple→pink with chaos
+        const r = lerp(156, 240, chaosLevel);
+        const g = lerp(107, 98, chaosLevel);
+        const b = lerp(196, 180, chaosLevel);
+
+        // Jitter at high chaos
+        let jx = 0, jy = 0;
+        if (chaosLevel > 0.5) {
+          const jitterAmt = (chaosLevel - 0.5) * 8;
+          jx = random(-jitterAmt, jitterAmt);
+          jy = random(-jitterAmt, jitterAmt);
+        }
+
+        // Glow halo
+        noStroke();
+        fill(r, g, b, 30 + chaosLevel * 40);
+        ellipse(s.x + jx, s.y + jy, baseSize * 2.5);
+
+        // Node
+        fill(r, g, b, 200);
+        ellipse(s.x + jx, s.y + jy, baseSize);
+
+        // Spawn occasional particles
+        if (random() < 0.05 + chaosLevel * 0.1) {
+          particles.push(createParticle(s.x, s.y, r, g, b));
+        }
+      } else {
+        // Inactive: small dim dot
+        noStroke();
+        fill(186, 140, 214, 60);
+        ellipse(s.x, s.y, 10);
+      }
+
+      // Current step highlight
+      if (isCurrent) {
+        noFill();
+        stroke(255, 255, 255, 200);
+        strokeWeight(2);
+        ellipse(s.x, s.y, 30);
+      }
+    }
+
+    // ── Breathe button (center) ──
+    drawBreatheButton(now);
+
+    // ── Particles ──
+    updateParticles();
+
+    // ── Status text ──
+    drawStatus(activeCount);
+
+    // ── Game logic ──
+    runGameLogic(now, activeCount);
+
+    // Lerp chaos
+    const targetChaos = activeCount / NUM_STEPS;
+    chaosLevel = lerp(chaosLevel, targetChaos, 0.02);
+  }
+
+  function drawBreatheButton(now) {
+    const btnRadius = 35;
+
+    if (breatheActive) {
+      // Calming green glow
+      const elapsed = now - breatheStart;
+      const progress = elapsed / BREATHE_DURATION;
+
+      noStroke();
+      fill(102, 187, 106, 40 + sin(now * 0.003) * 20);
+      ellipse(centerX, centerY, btnRadius * 3);
+
+      fill(102, 187, 106, 160);
+      ellipse(centerX, centerY, btnRadius * 2);
+
+      // Arc timer
+      noFill();
+      stroke(255, 255, 255, 200);
+      strokeWeight(3);
+      arc(centerX, centerY, btnRadius * 2.2, btnRadius * 2.2, -HALF_PI, -HALF_PI + TWO_PI * (1 - progress));
+
+      // Label
+      noStroke();
+      fill(255, 255, 255, 220);
+      textAlign(CENTER, CENTER);
+      textSize(11);
+      textStyle(BOLD);
+      text('breathing...', centerX, centerY);
+    } else {
+      // Normal button
+      noStroke();
+      fill(186, 140, 214, 40);
+      ellipse(centerX, centerY, btnRadius * 2.2);
+
+      fill(186, 140, 214, 80);
+      ellipse(centerX, centerY, btnRadius * 2);
+
+      fill(186, 140, 214, 180);
+      textAlign(CENTER, CENTER);
+      textSize(12);
+      textStyle(BOLD);
+      text('breathe', centerX, centerY);
+    }
+  }
+
+  function drawStatus(activeCount) {
+    let statusText = '';
+    let statusColor;
+
+    if (breatheActive) {
+      statusText = 'finding stillness...';
+      statusColor = color(102, 187, 106, 200);
+    } else if (activeCount <= 3) {
+      statusText = 'a moment of quiet';
+      statusColor = color(102, 187, 106, 180);
+    } else if (activeCount <= 6) {
+      statusText = 'manageable';
+      statusColor = color(176, 124, 216, 180);
+    } else if (activeCount <= 10) {
+      statusText = 'building...';
+      statusColor = color(224, 130, 170, 180);
+    } else {
+      statusText = 'overwhelming';
+      statusColor = color(240, 98, 146, 200);
+    }
+
+    noStroke();
+    fill(statusColor);
+    textAlign(CENTER, CENTER);
+    textSize(13);
+    textStyle(NORMAL);
+    text(statusText, centerX, canvasH - 25);
+  }
+
+  function runGameLogic(now, activeCount) {
+    // Auto-populate: every 3s base, decreases by 200ms per recent silence
+    const autoPopInterval = max(800, 3000 - silenceCount * 200);
+    if (now - lastAutoPopTime > autoPopInterval) {
+      lastAutoPopTime = now;
+      const inactiveSteps = steps.filter(s => !s.active);
+      if (inactiveSteps.length > 0) {
+        const target = random(inactiveSteps);
+        target.active = true;
+        target.activatedAt = now;
+        target.silencedAt = 0;
+      }
+    }
+
+    // Creep-back: silenced nodes reactivate after delay with increasing probability
+    for (const s of steps) {
+      if (!s.active && s.silencedAt > 0) {
+        const elapsed = now - s.silencedAt;
+        if (elapsed > s.creepBackDelay) {
+          const prob = map(elapsed, s.creepBackDelay, s.creepBackDelay + 4000, 0.001, 0.02);
+          if (random() < prob) {
+            s.active = true;
+            s.activatedAt = now;
+            s.silencedAt = 0;
+            s.creepBackDelay = random(2000, 6000);
+          }
+        }
+      }
+    }
+
+    // Decay silence count slowly
+    if (frameCount % 120 === 0 && silenceCount > 0) {
+      silenceCount = max(0, silenceCount - 1);
+    }
+  }
+
+  // ── Particles ────────────────────────────────────────────────
+  function createParticle(x, y, r, g, b) {
+    return {
+      x, y,
+      vx: random(-2, 2),
+      vy: random(-2, 2),
+      life: 1,
+      decay: random(0.01, 0.03),
+      r, g, b,
+      size: random(3, 7)
+    };
+  }
+
+  function spawnBurst(x, y, r, g, b, count) {
+    for (let i = 0; i < count; i++) {
+      const angle = random(TWO_PI);
+      const speed = random(1, 4);
+      particles.push({
+        x, y,
+        vx: cos(angle) * speed,
+        vy: sin(angle) * speed,
+        life: 1,
+        decay: random(0.015, 0.04),
+        r, g, b,
+        size: random(3, 8)
+      });
+    }
+  }
+
+  function updateParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= p.decay;
+
+      if (p.life <= 0) {
+        particles.splice(i, 1);
+        continue;
+      }
+
+      noStroke();
+      fill(p.r, p.g, p.b, p.life * 180);
+      ellipse(p.x, p.y, p.size * p.life);
+    }
+  }
+
+  // ── Interaction ──────────────────────────────────────────────
+  function mousePressed() {
+    if (!started) return;
+
+    const mx = mouseX;
+    const my = mouseY;
+
+    // Check breathe button
+    const dCenter = dist(mx, my, centerX, centerY);
+    if (dCenter < 35 && !breatheActive) {
+      breatheActive = true;
+      breatheStart = millis();
+      AudioEngine._breathing = true;
+      AudioEngine.setBreathe(true);
+
+      // Breathing calms some thoughts — silence up to half the active nodes
+      const activeSteps = steps.filter(s => s.active);
+      const toCalm = Math.ceil(activeSteps.length / 2);
+      const shuffled = shuffle(activeSteps);
+      for (let i = 0; i < toCalm; i++) {
+        shuffled[i].active = false;
+        shuffled[i].silencedAt = millis();
+        shuffled[i].creepBackDelay = random(3000, 8000); // longer creep-back after breathe
+        spawnBurst(shuffled[i].x, shuffled[i].y, 102, 187, 106, 8);
+      }
+
+      return;
+    }
+
+    // Check step nodes
+    for (const s of steps) {
+      if (s.active && dist(mx, my, s.x, s.y) < 20) {
+        s.active = false;
+        s.silencedAt = millis();
+        silenceCount++;
+        // Green particle burst
+        spawnBurst(s.x, s.y, 102, 187, 106, 12);
+        return;
+      }
+    }
+  }
+
+  // Touch support
+  function touchStarted() {
+    if (!started) return;
+    mousePressed();
+    return false; // prevent default
+  }
+
+  // ── Start overlay ────────────────────────────────────────────
+  document.getElementById('click-to-start').addEventListener('click', () => {
+    AudioEngine.init();
+    document.getElementById('click-to-start').classList.add('hidden');
+    started = true;
+    lastStepTime = millis();
+    lastAutoPopTime = millis();
+  });
+  </script>
+</body>
+</html>

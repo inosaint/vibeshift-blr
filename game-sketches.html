@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Sketches - Vibeshift BLR</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta name="description" content="A Wordle variant with a twist — letters you haven't guessed fade from the keyboard every 4 seconds. Race against the disappearing alphabet to find the word in 6 tries.">
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Quicksand', 'Nunito', 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #fce4ec 0%, #e8eaf6 25%, #e0f7fa 50%, #f3e5f5 75%, #fff9c4 100%);
+      background-attachment: fixed;
+      color: #4a3f6b;
+      min-height: 100vh;
+    }
+
+    nav {
+      padding: 0.75rem 1.5rem;
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(200, 160, 220, 0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    nav a {
+      color: #9c6bc4;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    nav a:hover { color: #7b40a8; text-decoration: underline; }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .setup-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #b07cd8;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    .setup-toggle:hover { color: #8e44ad; }
+
+    .help-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid rgba(186, 140, 214, 0.4);
+      background: rgba(255, 255, 255, 0.45);
+      color: #b07cd8;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+      padding: 0;
+    }
+
+    .help-btn:hover {
+      background: rgba(255, 255, 255, 0.7);
+      border-color: #c084e0;
+      color: #8e44ad;
+    }
+
+    .setup-toggle .arrow {
+      display: inline-block;
+      transition: transform 0.2s;
+      font-size: 0.7rem;
+    }
+
+    .setup-toggle .arrow.open { transform: rotate(90deg); }
+
+    .setup-panel {
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(200, 160, 220, 0.2);
+      padding: 0 1.5rem;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+
+    .setup-panel.open {
+      max-height: 300px;
+      padding: 1rem 1.5rem;
+    }
+
+    .setup-panel label {
+      display: block;
+      font-size: 0.8rem;
+      color: #9c6bc4;
+      margin-bottom: 0.3rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+    }
+
+    .setup-panel input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.6);
+      border: 2px solid rgba(186, 140, 214, 0.3);
+      border-radius: 10px;
+      padding: 0.6rem 0.8rem;
+      color: #4a3f6b;
+      font-family: inherit;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .setup-panel input:focus {
+      border-color: #c084e0;
+      box-shadow: 0 0 0 3px rgba(192, 132, 224, 0.15);
+    }
+
+    .header {
+      padding: 0.75rem 1.5rem 0.25rem;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #f06292, #ba68c8, #7e57c2, #42a5f5, #26c6da, #66bb6a, #fdd835, #ff7043);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: rainbow-shift 6s ease infinite;
+    }
+
+    .header .byline {
+      font-size: 0.95rem;
+      color: #b07cd8;
+      font-weight: 500;
+      margin-top: 0.25rem;
+    }
+
+    @keyframes rainbow-shift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Game container */
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.5rem 1rem 1rem;
+      gap: 0.5rem;
+    }
+
+    .status-msg {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #b07cd8;
+      min-height: 1.4em;
+      text-align: center;
+    }
+
+    .status-msg.win { color: #5aae72; }
+    .status-msg.lose { color: #d47a9a; }
+
+    /* Board */
+    .board {
+      display: grid;
+      grid-template-rows: repeat(6, 1fr);
+      gap: 6px;
+    }
+
+    .board-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .tile {
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      border-radius: 10px;
+      border: 2px solid rgba(186, 140, 214, 0.25);
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(6px);
+      color: #4a3f6b;
+      transition: transform 0.1s;
+    }
+
+    .tile.filled {
+      border-color: rgba(186, 140, 214, 0.5);
+      transform: scale(1.04);
+    }
+
+    .tile.correct {
+      background: #a0d8c0;
+      border-color: #7cc4a5;
+      color: #2d5e45;
+    }
+
+    .tile.present {
+      background: #e8a0bf;
+      border-color: #d88aad;
+      color: #6b2f4a;
+    }
+
+    .tile.absent {
+      background: rgba(186, 140, 214, 0.2);
+      border-color: rgba(186, 140, 214, 0.15);
+      color: #8a7ba0;
+    }
+
+    @keyframes flip {
+      0% { transform: scaleY(1); }
+      50% { transform: scaleY(0); }
+      100% { transform: scaleY(1); }
+    }
+
+    .tile.reveal {
+      animation: flip 0.4s ease;
+    }
+
+    /* Keyboard */
+    .keyboard {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      margin-top: 0.25rem;
+    }
+
+    .kb-row {
+      display: flex;
+      gap: 5px;
+    }
+
+    .key {
+      height: 50px;
+      min-width: 36px;
+      padding: 0 10px;
+      border-radius: 8px;
+      border: none;
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(6px);
+      color: #4a3f6b;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .key:hover { background: rgba(255, 255, 255, 0.75); }
+    .key:active { transform: scale(0.95); }
+
+    .key.wide { min-width: 60px; font-size: 0.7rem; }
+
+    .key.faded {
+      opacity: 0.15;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+
+    .key.correct {
+      background: #a0d8c0;
+      color: #2d5e45;
+    }
+
+    .key.present {
+      background: #e8a0bf;
+      color: #6b2f4a;
+    }
+
+    .key.absent {
+      background: rgba(186, 140, 214, 0.2);
+      color: #8a7ba0;
+    }
+
+    .timer {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: rgba(156, 107, 196, 0.6);
+      letter-spacing: 0.05em;
+      min-height: 1.2em;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(40, 20, 60, 0.45);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      animation: fade-in 0.3s ease;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal {
+      background: linear-gradient(135deg, #fce4ec 0%, #e8eaf6 25%, #e0f7fa 50%, #f3e5f5 75%, #fff9c4 100%);
+      border: 1px solid rgba(200, 160, 220, 0.35);
+      border-radius: 20px;
+      padding: 2rem 2.5rem;
+      text-align: center;
+      max-width: 340px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(100, 60, 140, 0.15);
+    }
+
+    .modal.guide {
+      text-align: left;
+      max-width: 380px;
+    }
+
+    .modal.guide h2 {
+      text-align: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .modal.guide p {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      margin-bottom: 0.6rem;
+      color: #4a3f6b;
+    }
+
+    .modal.guide .color-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin: 0.75rem 0;
+    }
+
+    .modal.guide .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .modal.guide .legend-swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      flex-shrink: 0;
+    }
+
+    .modal.guide .twist {
+      background: rgba(255, 255, 255, 0.35);
+      border-radius: 10px;
+      padding: 0.6rem 0.75rem;
+      margin: 0.75rem 0;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: #6b4a8a;
+    }
+
+    .modal.guide .got-it-btn {
+      display: block;
+      margin: 1rem auto 0;
+    }
+
+    .modal-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #4a3f6b;
+      margin-bottom: 0.3rem;
+    }
+
+    .modal .modal-word {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #7e57c2;
+      margin-bottom: 0.75rem;
+    }
+
+    .modal .modal-stats {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .modal .modal-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .modal .modal-stat .stat-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #4a3f6b;
+    }
+
+    .modal .modal-stat .stat-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #b07cd8;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .modal .modal-buttons {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    .new-game-btn {
+      margin-top: 0.5rem;
+      padding: 0.6rem 1.5rem;
+      border-radius: 10px;
+      border: 2px solid rgba(186, 140, 214, 0.3);
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(6px);
+      color: #9c6bc4;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .new-game-btn:hover {
+      background: rgba(255, 255, 255, 0.7);
+      border-color: #c084e0;
+    }
+
+    #root {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    @media (max-width: 480px) {
+      .tile { width: 48px; height: 48px; font-size: 1.35rem; }
+      .key { height: 44px; min-width: 28px; padding: 0 7px; font-size: 0.75rem; }
+      .key.wide { min-width: 48px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useRef, useCallback, useEffect } = React;
+
+    const FALLBACK_WORDS = [
+      'CRANE', 'STARE', 'BLEND', 'FROST', 'PLUMB',
+      'GHOST', 'FLAME', 'DRIFT', 'CLOUD', 'PLANT',
+      'BRAVE', 'CHARM', 'FLINT', 'GRAPE', 'HOUSE',
+      'LIGHT', 'MANGO', 'OCEAN', 'PRIDE', 'QUICK',
+    ];
+
+    const KB_ROWS = [
+      ['Q','W','E','R','T','Y','U','I','O','P'],
+      ['A','S','D','F','G','H','J','K','L'],
+      ['ENTER','Z','X','C','V','B','N','M','BACK'],
+    ];
+
+    const GLYPHS = '\u2702\u2706\u2709\u270E\u270F\u2712\u2714\u2716\u271D\u2721\u2726\u2727\u2729\u272A\u272B\u272C\u272D\u272E\u272F\u2730\u2731\u2732\u2733\u2734\u2735\u2736\u2737\u2738\u2739\u273A\u273B\u273C\u273D\u273E\u273F\u2740\u2741\u2742\u2743\u2744\u2745\u2746\u2747\u2748\u2749\u274A\u274B\u274D\u274F\u2750\u2751\u2752\u2756\u2758\u2759\u275A\u275B\u275C\u275D\u275E\u2761\u2762\u2763\u2764\u2765\u2766\u2767\u2768\u2769\u276A\u276B\u2776\u2777\u2778\u2779\u277A\u277B\u277C\u277D\u277E\u277F\u2780\u2781\u2782\u2783\u2784\u2785\u2786\u2787\u2788\u2789';
+
+    function useScrambleText(finalText, { duration = 2000, interval = 50 } = {}) {
+      const [display, setDisplay] = useState('');
+      const [done, setDone] = useState(false);
+
+      useEffect(() => {
+        const len = finalText.length;
+        const totalFrames = Math.floor(duration / interval);
+        let frame = 0;
+
+        const timer = setInterval(() => {
+          frame++;
+          const progress = frame / totalFrames;
+          const revealedCount = Math.floor(progress * len);
+
+          let result = '';
+          for (let i = 0; i < len; i++) {
+            if (finalText[i] === ' ') {
+              result += ' ';
+            } else if (i < revealedCount) {
+              result += finalText[i];
+            } else {
+              result += GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+            }
+          }
+          setDisplay(result);
+
+          if (frame >= totalFrames) {
+            clearInterval(timer);
+            setDisplay(finalText);
+            setDone(true);
+          }
+        }, interval);
+
+        return () => clearInterval(timer);
+      }, []);
+
+      return { display, done };
+    }
+
+    function getRandomFallback() {
+      return FALLBACK_WORDS[Math.floor(Math.random() * FALLBACK_WORDS.length)];
+    }
+
+    async function fetchWordFromClaude(apiKey) {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 20,
+          messages: [{
+            role: 'user',
+            content: 'Give me one random common 5-letter English word. Reply with ONLY the word in uppercase, nothing else.',
+          }],
+        }),
+      });
+
+      if (!res.ok) throw new Error(`API ${res.status}`);
+      const data = await res.json();
+      const word = (data.content?.[0]?.text || '').trim().toUpperCase();
+      if (word.length !== 5 || !/^[A-Z]+$/.test(word)) throw new Error('Bad word');
+      return word;
+    }
+
+    function evaluateGuess(guess, answer) {
+      const result = Array(5).fill('absent');
+      const answerChars = answer.split('');
+      const guessChars = guess.split('');
+
+      // First pass: correct
+      for (let i = 0; i < 5; i++) {
+        if (guessChars[i] === answerChars[i]) {
+          result[i] = 'correct';
+          answerChars[i] = null;
+          guessChars[i] = null;
+        }
+      }
+
+      // Second pass: present
+      for (let i = 0; i < 5; i++) {
+        if (guessChars[i] === null) continue;
+        const idx = answerChars.indexOf(guessChars[i]);
+        if (idx !== -1) {
+          result[i] = 'present';
+          answerChars[idx] = null;
+        }
+      }
+
+      return result;
+    }
+
+    function shuffleArray(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function buildFadeQueue(answer) {
+      const answerLetters = new Set(answer.split(''));
+      const all = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+      const eliminable = all.filter(l => !answerLetters.has(l));
+      return shuffleArray(eliminable);
+    }
+
+    function App() {
+      const [setupOpen, setSetupOpen] = useState(false);
+      const [apiKey, setApiKey] = useState('');
+      const [answer, setAnswer] = useState('');
+      const [loading, setLoading] = useState(true);
+      const [guesses, setGuesses] = useState([]);     // [{word, result}]
+      const [current, setCurrent] = useState('');
+      const [gameStatus, setGameStatus] = useState('playing'); // playing | won | lost
+      const [letterStates, setLetterStates] = useState({});
+      const [shakeRow, setShakeRow] = useState(false);
+      const [fadedLetters, setFadedLetters] = useState(new Set());
+      const [elapsedSeconds, setElapsedSeconds] = useState(0);
+      const [showModal, setShowModal] = useState(false);
+      const [gameStarted, setGameStarted] = useState(false);
+      const [showGuide, setShowGuide] = useState(false);
+
+      const fadeQueueRef = useRef([]);
+      const fadeIndexRef = useRef(0);
+      const timerRef = useRef(null);
+      const fadeTimerRef = useRef(null);
+
+      const title = useScrambleText('Game Sketches', { duration: 2500, interval: 40 });
+
+      // Reset for same word (Try Again)
+      const resetBoard = useCallback((word) => {
+        setGuesses([]);
+        setCurrent('');
+        setGameStatus('playing');
+        setLetterStates({});
+        setFadedLetters(new Set());
+        setElapsedSeconds(0);
+        setShowModal(false);
+        setGameStarted(false);
+        fadeQueueRef.current = buildFadeQueue(word);
+        fadeIndexRef.current = 0;
+      }, []);
+
+      const startGame = useCallback(async (keepWord) => {
+        if (keepWord && answer) {
+          resetBoard(answer);
+          setLoading(false);
+          return;
+        }
+
+        setLoading(true);
+        let word;
+        if (apiKey) {
+          try {
+            word = await fetchWordFromClaude(apiKey);
+          } catch {
+            word = getRandomFallback();
+          }
+        } else {
+          word = getRandomFallback();
+        }
+        setAnswer(word);
+        resetBoard(word);
+        setLoading(false);
+      }, [apiKey, answer, resetBoard]);
+
+      useEffect(() => { startGame(false); }, []);
+
+      // Auto-show guide on first visit
+      useEffect(() => {
+        if (!localStorage.getItem('wordle-guide-seen')) {
+          setShowGuide(true);
+          localStorage.setItem('wordle-guide-seen', '1');
+        }
+      }, []);
+
+      // Elapsed timer — only starts after first keypress
+      useEffect(() => {
+        if (timerRef.current) clearInterval(timerRef.current);
+        if (gameStarted && gameStatus === 'playing') {
+          timerRef.current = setInterval(() => {
+            setElapsedSeconds(s => s + 1);
+          }, 1000);
+        }
+        return () => clearInterval(timerRef.current);
+      }, [gameStarted, gameStatus]);
+
+      // Fading letters timer — only starts after first keypress
+      useEffect(() => {
+        if (fadeTimerRef.current) clearInterval(fadeTimerRef.current);
+        if (gameStarted && gameStatus === 'playing') {
+          fadeTimerRef.current = setInterval(() => {
+            setFadedLetters(prev => {
+              const queue = fadeQueueRef.current;
+              let idx = fadeIndexRef.current;
+              // Skip letters already revealed by guesses
+              while (idx < queue.length) {
+                const letter = queue[idx];
+                // letterStates is stale here, so we read from DOM-free ref trick:
+                // Instead, we pass letterStates via a ref
+                idx++;
+                // We'll add it regardless — the key rendering checks letterStates priority
+                const next = new Set(prev);
+                next.add(letter);
+                fadeIndexRef.current = idx;
+                return next;
+              }
+              // All eliminable letters faded — trigger loss handled below
+              return prev;
+            });
+          }, 4000);
+        }
+        return () => clearInterval(fadeTimerRef.current);
+      }, [gameStarted, gameStatus]);
+
+      // Check if all eliminable letters have faded → lose
+      useEffect(() => {
+        if (gameStatus !== 'playing' || loading) return;
+        const queue = fadeQueueRef.current;
+        if (queue.length > 0 && fadedLetters.size >= queue.length) {
+          setGameStatus('lost');
+        }
+      }, [fadedLetters, gameStatus, loading]);
+
+      // Show modal on game end
+      useEffect(() => {
+        if (gameStatus === 'won' || gameStatus === 'lost') {
+          const t = setTimeout(() => setShowModal(true), 600);
+          return () => clearTimeout(t);
+        }
+      }, [gameStatus]);
+
+      const submitGuess = useCallback(() => {
+        if (current.length !== 5 || gameStatus !== 'playing') return;
+
+        const guess = current.toUpperCase();
+        const result = evaluateGuess(guess, answer);
+        const newGuesses = [...guesses, { word: guess, result }];
+        setGuesses(newGuesses);
+        setCurrent('');
+
+        // Update letter states (only upgrade: absent -> present -> correct)
+        const priority = { correct: 3, present: 2, absent: 1 };
+        const newStates = { ...letterStates };
+        for (let i = 0; i < 5; i++) {
+          const letter = guess[i];
+          const state = result[i];
+          if (!newStates[letter] || priority[state] > priority[newStates[letter]]) {
+            newStates[letter] = state;
+          }
+        }
+        setLetterStates(newStates);
+
+        if (guess === answer) {
+          setGameStatus('won');
+        } else if (newGuesses.length >= 6) {
+          setGameStatus('lost');
+        }
+      }, [current, answer, guesses, gameStatus, letterStates]);
+
+      const handleKey = useCallback((key) => {
+        if (gameStatus !== 'playing' || loading) return;
+
+        if (key === 'ENTER') {
+          if (current.length === 5) {
+            submitGuess();
+          } else {
+            setShakeRow(true);
+            setTimeout(() => setShakeRow(false), 400);
+          }
+        } else if (key === 'BACK' || key === 'BACKSPACE') {
+          setCurrent(prev => prev.slice(0, -1));
+        } else if (/^[A-Z]$/.test(key) && current.length < 5) {
+          // Block faded letters (unless already revealed by a guess)
+          if (fadedLetters.has(key) && !letterStates[key]) return;
+          if (!gameStarted) setGameStarted(true);
+          setCurrent(prev => prev + key);
+        }
+      }, [gameStatus, loading, current, submitGuess, fadedLetters, letterStates, gameStarted]);
+
+      // Physical keyboard
+      useEffect(() => {
+        const handler = (e) => {
+          if (e.ctrlKey || e.metaKey || e.altKey) return;
+          const key = e.key.toUpperCase();
+          if (key === 'ENTER' || key === 'BACKSPACE' || (/^[A-Z]$/.test(key) && key.length === 1)) {
+            e.preventDefault();
+            handleKey(key);
+          }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+      }, [handleKey]);
+
+      const score = Math.max(0, 1000 - (elapsedSeconds * 10) - (guesses.length * 50));
+
+      const formatTime = (s) => {
+        const m = Math.floor(s / 60);
+        const sec = s % 60;
+        return m > 0 ? `${m}:${sec.toString().padStart(2, '0')}` : `${sec}s`;
+      };
+
+      return (
+        <>
+          <nav>
+            <a href="index.html">&larr; Back to all projects</a>
+            <div className="nav-controls">
+              <button className="help-btn" onClick={() => setShowGuide(true)} title="How to Play">?</button>
+              <div className="setup-toggle" onClick={() => setSetupOpen(!setupOpen)}>
+                <span className={`arrow ${setupOpen ? 'open' : ''}`}>&#9654;</span>
+                Setup
+              </div>
+            </div>
+          </nav>
+          <div className={`setup-panel ${setupOpen ? 'open' : ''}`}>
+            <div className="field">
+              <label>API Key</label>
+              <input
+                type="password"
+                placeholder="sk-ant-... (optional — uses fallback words without it)"
+                value={apiKey}
+                onChange={e => setApiKey(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="header">
+            <h1>{title.display}</h1>
+            <p className="byline">with Charu Tak</p>
+          </div>
+
+          <div className="game-container">
+            <div className="timer">
+              {!loading && (gameStatus === 'playing' ? formatTime(elapsedSeconds) : formatTime(elapsedSeconds))}
+            </div>
+
+            {/* Board */}
+            <div className="board">
+              {Array.from({ length: 6 }).map((_, rowIdx) => {
+                const guess = guesses[rowIdx];
+                const isCurrentRow = rowIdx === guesses.length && gameStatus === 'playing';
+
+                return (
+                  <div
+                    key={rowIdx}
+                    className="board-row"
+                    style={isCurrentRow && shakeRow ? { animation: 'shake 0.3s ease' } : undefined}
+                  >
+                    {Array.from({ length: 5 }).map((_, colIdx) => {
+                      let letter = '';
+                      let cls = 'tile';
+
+                      if (guess) {
+                        letter = guess.word[colIdx];
+                        cls += ` ${guess.result[colIdx]} reveal`;
+                      } else if (isCurrentRow && colIdx < current.length) {
+                        letter = current[colIdx];
+                        cls += ' filled';
+                      }
+
+                      return (
+                        <div
+                          key={colIdx}
+                          className={cls}
+                          style={guess ? { animationDelay: `${colIdx * 0.1}s` } : undefined}
+                        >
+                          {letter}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Keyboard */}
+            <div className="keyboard">
+              {KB_ROWS.map((row, ri) => (
+                <div key={ri} className="kb-row">
+                  {row.map(key => {
+                    let cls = 'key';
+                    if (key === 'ENTER' || key === 'BACK') cls += ' wide';
+                    if (letterStates[key]) cls += ` ${letterStates[key]}`;
+                    else if (fadedLetters.has(key)) cls += ' faded';
+                    return (
+                      <button
+                        key={key}
+                        className={cls}
+                        onClick={() => handleKey(key)}
+                      >
+                        {key === 'BACK' ? '\u232B' : key}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* How to Play Guide */}
+          {showGuide && (
+            <div className="modal-overlay" onClick={() => setShowGuide(false)}>
+              <div className="modal guide" onClick={e => e.stopPropagation()}>
+                <h2>How to Play</h2>
+                <p>Guess the word in <strong>6 tries</strong>. Each guess must be a 5-letter word.</p>
+                <div className="color-legend">
+                  <div className="legend-row">
+                    <div className="legend-swatch" style={{background: '#a0d8c0', border: '2px solid #7cc4a5'}}></div>
+                    <span><strong>Green</strong> — correct letter, correct spot</span>
+                  </div>
+                  <div className="legend-row">
+                    <div className="legend-swatch" style={{background: '#e8a0bf', border: '2px solid #d88aad'}}></div>
+                    <span><strong>Pink</strong> — correct letter, wrong spot</span>
+                  </div>
+                  <div className="legend-row">
+                    <div className="legend-swatch" style={{background: 'rgba(186, 140, 214, 0.2)', border: '2px solid rgba(186, 140, 214, 0.15)'}}></div>
+                    <span><strong>Grey</strong> — letter not in the word</span>
+                  </div>
+                </div>
+                <div className="twist">
+                  <strong>The twist:</strong> Letters not in the answer fade from the keyboard every 4 seconds — act fast!
+                </div>
+                <p>Scoring is based on speed and number of guesses. Fewer guesses + faster time = higher score.</p>
+                <button className="new-game-btn got-it-btn" onClick={() => setShowGuide(false)}>Got it</button>
+              </div>
+            </div>
+          )}
+
+          {/* Result Modal */}
+          {showModal && (
+            <div className="modal-overlay" onClick={() => setShowModal(false)}>
+              <div className="modal" onClick={e => e.stopPropagation()}>
+                <div className="modal-icon">{gameStatus === 'won' ? '\u2728' : '\uD83D\uDCA8'}</div>
+                <h2>{gameStatus === 'won' ? 'Nice work!' : 'Time\'s up!'}</h2>
+                <div className="modal-word">{answer}</div>
+                <div className="modal-stats">
+                  <div className="modal-stat">
+                    <span className="stat-value">{gameStatus === 'won' ? score : 0}</span>
+                    <span className="stat-label">Score</span>
+                  </div>
+                  <div className="modal-stat">
+                    <span className="stat-value">{formatTime(elapsedSeconds)}</span>
+                    <span className="stat-label">Time</span>
+                  </div>
+                  <div className="modal-stat">
+                    <span className="stat-value">{guesses.length}</span>
+                    <span className="stat-label">Guesses</span>
+                  </div>
+                </div>
+                <div className="modal-buttons">
+                  <button className="new-game-btn" onClick={() => startGame(true)}>
+                    Try Again
+                  </button>
+                  <button className="new-game-btn" onClick={() => startGame(false)}>
+                    New Word
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
