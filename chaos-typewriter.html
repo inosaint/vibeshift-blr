@@ -29,8 +29,6 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      position: relative;
-      z-index: 200;
     }
 
     nav a {
@@ -1154,9 +1152,12 @@ Rules:
         };
 
         p.touchStarted = function() {
-          if (!gameStateRef.current.started) return;
-          p.mousePressed();
-          return false;
+          if (!gameStateRef.current.started) return true;
+          if (p.mouseX >= 0 && p.mouseX <= canvasW && p.mouseY >= 0 && p.mouseY <= canvasH) {
+            p.mousePressed();
+            return false;
+          }
+          return true;
         };
       };
 

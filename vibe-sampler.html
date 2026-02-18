@@ -25,8 +25,6 @@
       background: rgba(255, 255, 255, 0.4);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid rgba(200, 160, 220, 0.3);
-      position: relative;
-      z-index: 200;
     }
 
     nav a {
@@ -680,11 +678,14 @@
     }
   }
 
-  // Touch support
+  // Touch support — only prevent default when touch is on the canvas
   function touchStarted() {
-    if (!started) return;
-    mousePressed();
-    return false; // prevent default
+    if (!started) return true;
+    if (mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height) {
+      mousePressed();
+      return false; // prevent default only for canvas touches
+    }
+    return true; // allow default for all other touches (buttons, links, etc.)
   }
 
   // ── Start overlay ────────────────────────────────────────────
