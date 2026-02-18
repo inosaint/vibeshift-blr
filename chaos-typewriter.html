@@ -924,7 +924,7 @@ Rules:
 
     function getRandomFallback(exclude) {
       const available = FALLBACK_WORDS.filter(w => !exclude.has(w));
-      if (available.length === 0) return FALLBACK_WORDS[Math.floor(Math.random() * FALLBACK_WORDS.length)];
+      if (available.length === 0) return null;
       return available[Math.floor(Math.random() * available.length)];
     }
 
@@ -1175,6 +1175,7 @@ Rules:
       const [started, setStarted] = useState(false);
       const [showGuide, setShowGuide] = useState(false);
       const [showGameOver, setShowGameOver] = useState(false);
+      const [showCongrats, setShowCongrats] = useState(false);
 
       // Word state
       const [answer, setAnswer] = useState('');
@@ -1644,6 +1645,13 @@ Rules:
         // Fallback: pick a word and generate hints + random personality
         if (!word) {
           word = getRandomFallback(usedWordsRef.current);
+          if (!word) {
+            // All fallback words exhausted — you win!
+            setWordPhase('idle');
+            setShowCongrats(true);
+            if (audioRef.current) audioRef.current.stopAll();
+            return;
+          }
           if (!personality) {
             personality = FALLBACK_PERSONALITIES[Math.floor(Math.random() * FALLBACK_PERSONALITIES.length)];
           }
@@ -1873,6 +1881,7 @@ Rules:
       // Restart
       const handleRestart = useCallback(() => {
         setShowGameOver(false);
+        setShowCongrats(false);
         setNodes(new Array(NUM_STEPS).fill(false));
         setChaosLevel(0);
         setWordsCompleted(0);
@@ -1906,7 +1915,7 @@ Rules:
             <a href="index.html">&larr; Back to all projects</a>
             <div className="nav-controls">
               <button className="help-btn" onClick={() => setShowGuide(true)} title="How to Play">?</button>
-              <button className="help-btn" onClick={() => setSetupOpen(!setupOpen)} title="Settings" style={{fontSize: '1rem'}}>&#x2699;&#xFE0F;</button>
+              <button className="setup-toggle" onClick={() => setSetupOpen(!setupOpen)}>Setup <span className={`arrow${setupOpen ? ' open' : ''}`}>▶</span></button>
             </div>
           </nav>
           <div className={`setup-panel ${setupOpen ? 'open' : ''}`}>
@@ -2085,6 +2094,46 @@ Rules:
                         <span className="word-badge missed">in progress</span>
                       </div>
                     )}
+                  </div>
+                )}
+                <button className="btn" onClick={handleRestart}>Play Again</button>
+              </div>
+            </div>
+          )}
+
+          {/* Congrats — all words cleared */}
+          {showCongrats && (
+            <div className="modal-overlay">
+              <div className="modal">
+                <div className="modal-icon">{'\uD83C\uDF89'}</div>
+                <h2>You Beat the Chaos!</h2>
+                <p style={{margin: '0.5rem 0 1rem', color: '#b07cd8', fontSize: '1rem'}}>
+                  All {FALLBACK_WORDS.length} words conquered
+                </p>
+                <div className="modal-stats">
+                  <div className="modal-stat">
+                    <span className="stat-value">{totalScore}</span>
+                    <span className="stat-label">Score</span>
+                  </div>
+                  <div className="modal-stat">
+                    <span className="stat-value">{wordsCompleted}</span>
+                    <span className="stat-label">Solved</span>
+                  </div>
+                  <div className="modal-stat">
+                    <span className="stat-value">{wordHistory.length}</span>
+                    <span className="stat-label">Total</span>
+                  </div>
+                </div>
+                {wordHistory.length > 0 && (
+                  <div className="word-list">
+                    {wordHistory.map((w, i) => (
+                      <div key={i} className="word-item">
+                        <span className="word-text">{w.word}</span>
+                        <span className={`word-badge ${w.solved ? 'solved' : 'missed'}`}>
+                          {w.solved ? `+${w.score}` : 'missed'}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
                 <button className="btn" onClick={handleRestart}>Play Again</button>
