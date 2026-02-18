@@ -356,7 +356,7 @@
       border-radius: 8px;
       padding: 0.5rem 0.8rem;
       position: relative;
-      margin-left: 2.2rem;
+      margin-left: 2.6rem;
     }
 
     .hint-bubble::before {
@@ -373,10 +373,12 @@
 
     .hint-icon {
       position: absolute;
-      left: -2.2rem;
-      top: 0.3rem;
-      font-size: 1.4rem;
-      line-height: 1;
+      left: -2.4rem;
+      top: 0;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      object-fit: cover;
     }
 
     .hint-content {
@@ -918,8 +920,28 @@
     const NUM_LETTERS = 5;
     const TOTAL_COLS = NUM_LETTERS * COLS_PER_LETTER; // 15
     const TOTAL_CELLS = TOTAL_COLS * GRID_ROWS; // 90
-    const BLOCK_GAP = 6; // px gap between letter blocks
+    const BLOCK_GAP = 8; // px gap between letter blocks (~0.5rem)
     const MAX_GUESSES = 6;
+
+    // Personality avatar images
+    const PERSONALITY_AVATARS = {
+      'librarian':   'public/bored-librarian.png',
+      'lighthouse':  'public/Grumpy-Lighthouse-Keeper.png',
+      'pigeon':      'public/confused-pigeon.png',
+      'cactus':      'public/Philosophical-Cactus.png',
+    };
+    const AVATAR_KEYS = Object.keys(PERSONALITY_AVATARS);
+
+    function getAvatarSrc(personality) {
+      if (!personality) return PERSONALITY_AVATARS['pigeon'];
+      const lower = personality.toLowerCase();
+      for (const key of AVATAR_KEYS) {
+        if (lower.includes(key)) return PERSONALITY_AVATARS[key];
+      }
+      // Consistent random pick based on personality string
+      const hash = personality.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+      return Object.values(PERSONALITY_AVATARS)[hash % AVATAR_KEYS.length];
+    }
 
     // Helpers
     function colToBlock(col) { return Math.floor(col / COLS_PER_LETTER); }
@@ -1134,30 +1156,41 @@ Rules:
 
         p.draw = function() {
           const state = gameStateRef.current;
-          if (!state.started) {
-            p.clear();
-            return;
-          }
-
           const chaos = state.chaosLevel;
           const now = p.millis();
 
-          // Clear
-          p.background(252, 228, 236, p.lerp(240, 120, chaos));
+          // Transparent background
+          p.clear();
 
-          // Advance playhead
-          const bpm = 100 + chaos * 40;
-          const stepInterval = 60000 / bpm / 4;
+          // Advance playhead (only when game is running)
+          if (state.started) {
+            const bpm = 100 + chaos * 40;
+            const stepInterval = 60000 / bpm / 4;
 
-          if (now - state.lastStepTime > stepInterval) {
-            state.currentStep = (state.currentStep + 1) % TOTAL_COLS;
-            state.lastStepTime = now;
-            // Play all active cells in current column
-            for (let row = 0; row < GRID_ROWS; row++) {
-              if (state.nodes[state.currentStep] && state.nodes[state.currentStep][row]) {
-                AudioEngine.playNote(state.currentStep, row, chaos);
+            if (now - state.lastStepTime > stepInterval) {
+              state.currentStep = (state.currentStep + 1) % TOTAL_COLS;
+              state.lastStepTime = now;
+              for (let row = 0; row < GRID_ROWS; row++) {
+                if (state.nodes[state.currentStep] && state.nodes[state.currentStep][row]) {
+                  AudioEngine.playNote(state.currentStep, row, chaos);
+                }
               }
             }
+          }
+
+          // Playhead column highlight
+          if (state.started && state.currentStep >= 0) {
+            const { x: phX } = getCellPos(state.currentStep, 0);
+            const colH = GRID_ROWS * (cellSize + cellGap) - cellGap;
+            // Filled glow behind
+            p.noStroke();
+            p.fill(160, 120, 200, 50);
+            p.rect(phX - 3, MARGIN - 3, cellSize + 6, colH + 6, 5);
+            // Border outline
+            p.noFill();
+            p.stroke(140, 100, 180, 120);
+            p.strokeWeight(2);
+            p.rect(phX - 3, MARGIN - 3, cellSize + 6, colH + 6, 5);
           }
 
           // Draw cells
@@ -1176,44 +1209,45 @@ Rules:
               const resultState = guessResult && guessResult[block];
 
               let r, g, b, a;
+              let sr, sg, sb, sa; // stroke color
 
               if (isPixel && resultState === 'correct') {
-                r = 120; g = 190; b = 150; a = 220;
+                r = 110; g = 195; b = 150; a = 160;
+                sr = 80; sg = 170; sb = 120; sa = 120;
               } else if (isPixel && resultState === 'present') {
-                r = 220; g = 140; b = 175; a = 220;
+                r = 210; g = 140; b = 175; a = 160;
+                sr = 180; sg = 110; sb = 145; sa = 120;
               } else if (isPixel && resultState === 'absent') {
-                r = 160; g = 120; b = 190; a = 120;
+                r = 160; g = 130; b = 180; a = 110;
+                sr = 140; sg = 110; sb = 160; sa = 90;
               } else if (isPixel) {
-                // Typed letter — dark shade
-                r = 40; g = 30; b = 60; a = 255;
+                // Typed letter — cool gray-purple, subtle
+                r = 100; g = 90; b = 120; a = 90;
+                sr = 80; sg = 70; sb = 100; sa = 100;
               } else if (isActive) {
-                // Chaos node — soft purple pulsing
-                const pulse = Math.sin(now * 0.004 + col * 0.7 + row * 0.3) * 0.1 + 1;
-                r = p.lerp(176, 200, chaos);
-                g = p.lerp(140, 130, chaos);
-                b = p.lerp(210, 220, chaos);
-                a = (140 + chaos * 60) * pulse;
+                // Chaos node — warm pink-purple, pulsing
+                const pulse = Math.sin(now * 0.004 + col * 0.7 + row * 0.3) * 0.15 + 1;
+                r = p.lerp(200, 230, chaos);
+                g = p.lerp(100, 80, chaos);
+                b = p.lerp(160, 140, chaos);
+                a = (120 + chaos * 60) * pulse;
+                sr = r - 20; sg = g - 10; sb = b - 10; sa = (100 + chaos * 40) * pulse;
               } else {
-                // Empty cell — soft pastel pink
-                r = 230; g = 210; b = 225; a = 50;
+                // Empty cell — light, minimal
+                r = 230; g = 220; b = 235; a = 60;
+                sr = 190; sg = 175; sb = 200; sa = 50;
               }
 
-              // Playhead brightens
-              if (isCurrent) {
-                a = Math.min(255, a + 50);
+              // Playhead column — draw highlight behind cells
+              if (isCurrent && state.started) {
+                // Bright cell overlay
+                a = Math.min(255, a + 40);
               }
 
-              p.noStroke();
               p.fill(r, g, b, a);
+              p.stroke(sr, sg, sb, sa);
+              p.strokeWeight(1);
               p.rect(x, y, cellSize, cellSize, cellSize * 0.2);
-
-              // Active chaos cells get a subtle border
-              if (isActive && !isPixel) {
-                p.noFill();
-                p.stroke(r, g, b, 60);
-                p.strokeWeight(1);
-                p.rect(x, y, cellSize, cellSize, cellSize * 0.2);
-              }
 
               // Particles from active cells
               if (isActive && Math.random() < 0.005 + chaos * 0.01) {
@@ -1225,21 +1259,6 @@ Rules:
                 });
               }
             }
-          }
-
-          // Playhead column highlight
-          const { x: phX } = getCellPos(state.currentStep, 0);
-          p.noFill();
-          p.stroke(255, 255, 255, 150);
-          p.strokeWeight(2);
-          p.rect(phX - 1, MARGIN - 1, cellSize + 2, GRID_ROWS * (cellSize + cellGap) - cellGap + 2, 4);
-
-          // Block separators (subtle lines between letter blocks)
-          for (let b = 1; b < NUM_LETTERS; b++) {
-            const sepX = MARGIN + b * COLS_PER_LETTER * (cellSize + cellGap) + (b - 1) * BLOCK_GAP + BLOCK_GAP / 2;
-            p.stroke(186, 140, 214, 30);
-            p.strokeWeight(1);
-            p.line(sepX, MARGIN, sepX, canvasH - MARGIN);
           }
 
           // Breathe overlay
@@ -2148,7 +2167,7 @@ Rules:
               <div className="hint-bubble-wrap">
                 {hints.length > 0 && hints[hintLevel] ? (
                   <div className="hint-bubble">
-                    <span className="hint-icon">{currentPersonality === 'SARCASTIC FORTUNE COOKIE' ? '\uD83E\uDD60' : '\uD83D\uDCAC'}</span>
+                    <img className="hint-icon" src={getAvatarSrc(currentPersonality)} alt="" />
                     <div className="hint-content">
                       <span className="hint-personality">{hints[hintLevel].personality}</span>
                       <span className="hint-text">{hints[hintLevel].text}</span>
@@ -2156,14 +2175,17 @@ Rules:
                   </div>
                 ) : wordPhase === 'loading' ? (
                   <div className="hint-bubble waiting">
+                    <img className="hint-icon" src={getAvatarSrc(currentPersonality)} alt="" />
                     <span className="hint-waiting">thinking of a word...</span>
                   </div>
                 ) : wordPhase === 'solved' ? (
                   <div className="hint-bubble">
+                    <img className="hint-icon" src={getAvatarSrc(currentPersonality)} alt="" />
                     <span className="hint-waiting">nice! next word coming...</span>
                   </div>
                 ) : wordPhase === 'failed' ? (
                   <div className="hint-bubble">
+                    <img className="hint-icon" src={getAvatarSrc(currentPersonality)} alt="" />
                     <span className="hint-waiting">the word was {answer}... next one coming...</span>
                   </div>
                 ) : null}
