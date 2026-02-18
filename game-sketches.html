@@ -26,9 +26,31 @@
       background: rgba(255, 255, 255, 0.4);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid rgba(200, 160, 220, 0.3);
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
       align-items: center;
+    }
+
+    .nav-title {
+      text-align: center;
+    }
+
+    .nav-title h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #f06292, #ba68c8, #7e57c2, #42a5f5, #26c6da, #66bb6a, #fdd835, #ff7043);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: rainbow-shift 6s ease infinite;
+      line-height: 1.2;
+    }
+
+    .nav-title .byline {
+      font-size: 0.7rem;
+      color: #b07cd8;
+      font-weight: 500;
     }
 
     nav a {
@@ -49,6 +71,7 @@
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      justify-content: flex-end;
     }
 
     .setup-toggle {
@@ -145,29 +168,6 @@
     .setup-panel input:focus {
       border-color: #c084e0;
       box-shadow: 0 0 0 3px rgba(192, 132, 224, 0.15);
-    }
-
-    .header {
-      padding: 0.75rem 1.5rem 0.25rem;
-      text-align: center;
-    }
-
-    .header h1 {
-      font-size: 1.6rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, #f06292, #ba68c8, #7e57c2, #42a5f5, #26c6da, #66bb6a, #fdd835, #ff7043);
-      background-size: 200% 200%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: rainbow-shift 6s ease infinite;
-    }
-
-    .header .byline {
-      font-size: 0.95rem;
-      color: #b07cd8;
-      font-weight: 500;
-      margin-top: 0.25rem;
     }
 
     @keyframes rainbow-shift {
@@ -829,7 +829,11 @@
       return (
         <>
           <nav>
-            <a href="index.html">&larr; Back to all projects</a>
+            <a href="index.html">&larr; Back</a>
+            <div className="nav-title">
+              <h1>{title.display}</h1>
+              <span className="byline">with Charu Tak</span>
+            </div>
             <div className="nav-controls">
               <button className="help-btn" onClick={() => setShowGuide(true)} title="How to Play">?</button>
               <div className="setup-toggle" onClick={() => setSetupOpen(!setupOpen)}>
@@ -850,10 +854,6 @@
             </div>
           </div>
 
-          <div className="header">
-            <h1>{title.display}</h1>
-            <p className="byline">with Charu Tak</p>
-          </div>
 
           <div className="game-container">
             <div className="timer">

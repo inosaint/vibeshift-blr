@@ -208,12 +208,14 @@
     .header h1 {
       font-size: 1.6rem;
       font-weight: 700;
-      background: linear-gradient(135deg, #f06292, #ba68c8, #7e57c2, #42a5f5, #26c6da, #66bb6a, #fdd835, #ff7043);
-      background-size: 200% 200%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: rainbow-shift 6s ease infinite;
+    }
+
+    .header h1 .title-chaos {
+      color: #4a3f6b;
+    }
+
+    .header h1 .title-typewriter {
+      color: #b07cd8;
     }
 
     .header .byline {
@@ -223,11 +225,6 @@
       margin-top: 0.25rem;
     }
 
-    @keyframes rainbow-shift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
 
     /* Sequencer canvas */
     #sequencer-container {
@@ -252,16 +249,6 @@
       gap: 0.5rem;
     }
 
-    .status-msg {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #b07cd8;
-      min-height: 1.4em;
-      text-align: center;
-    }
-
-    .status-msg.win { color: #5aae72; }
-    .status-msg.lose { color: #d47a9a; }
 
     /* Keyboard */
     .keyboard {
@@ -300,6 +287,13 @@
     .key:active { transform: scale(0.95); }
 
     .key.wide { min-width: 60px; font-size: 0.7rem; }
+    .key.breathe-key {
+      flex: 1;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
 
     .key.faded {
       opacity: 0.15;
@@ -322,53 +316,62 @@
       color: #8a7ba0;
     }
 
-    /* Speech bubble hint */
-    .hint-bubble-wrap {
+    /* Hint + stats row */
+    .hint-stats-row {
       display: flex;
-      justify-content: center;
+      align-items: flex-start;
+      justify-content: space-between;
       margin: 0.5rem 1rem 0;
       min-height: 3em;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 0 0.5rem;
+      gap: 1rem;
+    }
+
+    .hint-bubble-wrap {
+      flex: 1;
+      min-width: 0;
     }
 
     .hint-bubble {
-      position: relative;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
       background: rgba(255, 255, 255, 0.55);
       backdrop-filter: blur(8px);
       border: 1px solid rgba(200, 160, 220, 0.35);
       border-radius: 16px;
-      padding: 0.6rem 1.2rem;
-      max-width: 500px;
-      text-align: center;
+      padding: 0.6rem 1rem;
       box-shadow: 0 2px 12px rgba(100, 60, 140, 0.08);
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
 
-    .hint-bubble::after {
-      content: '';
-      position: absolute;
-      bottom: -8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left: 8px solid transparent;
-      border-right: 8px solid transparent;
-      border-top: 8px solid rgba(255, 255, 255, 0.55);
+    .hint-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .hint-content {
+      flex: 1;
+      min-width: 0;
     }
 
     .hint-bubble .hint-personality {
       display: block;
       font-weight: 700;
-      font-size: 0.75rem;
-      color: #e91e63;
-      margin-bottom: 0.2rem;
+      font-size: 0.7rem;
+      color: #4a3f6b;
+      margin-bottom: 0.15rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
 
     .hint-bubble .hint-text {
       color: #4a3f6b;
-      font-size: 0.95rem;
+      font-size: 0.85rem;
       font-weight: 500;
       line-height: 1.4;
     }
@@ -383,13 +386,25 @@
       font-size: 0.85rem;
     }
 
-    /* Breathe indicator */
-    .breathe-hint {
-      font-size: 0.75rem;
-      color: rgba(156, 107, 196, 0.6);
-      text-align: center;
-      min-height: 1em;
+    .game-stats {
+      flex-shrink: 0;
+      text-align: right;
+      font-size: 0.8rem;
+      color: #8a7ba0;
+      line-height: 1.6;
+      white-space: nowrap;
     }
+
+    .game-stats .stat-number {
+      font-weight: 700;
+      color: #4a3f6b;
+    }
+
+    .game-stats .stat-label {
+      font-weight: 500;
+      color: #b07cd8;
+    }
+
 
     /* Modals */
     .modal-overlay {
@@ -424,9 +439,15 @@
       text-align: left;
     }
 
+    .modal.guide .btn {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
     .modal.guide h2 {
       text-align: center;
-      margin-bottom: 0.75rem;
+      margin-bottom: 1.25rem;
     }
 
     .modal.guide p {
@@ -827,7 +848,8 @@
     const KB_ROWS = [
       ['Q','W','E','R','T','Y','U','I','O','P'],
       ['A','S','D','F','G','H','J','K','L'],
-      ['ENTER','Z','X','C','V','B','N','M','BACK'],
+      ['BACK','Z','X','C','V','B','N','M'],
+      ['BREATHE','ENTER'],
     ];
 
     const FALLBACK_WORDS = [
@@ -1239,7 +1261,7 @@ Rules:
       const silencedAtRef = useRef({});
       const abortRef = useRef(null);
 
-      const title = useScrambleText('Chaos Typewriter', { duration: 2500, interval: 40 });
+      const title = { display: 'Chaos Typewriter', done: true };
 
       // Shared state ref for p5
       const gameStateRef = useRef({
@@ -1863,10 +1885,8 @@ Rules:
             e.preventDefault();
             handleKey(key);
           }
-          // Spacebar for breathe
           if (e.key === ' ') {
             e.preventDefault();
-            triggerBreathe();
           }
         };
         window.addEventListener('keydown', handler);
@@ -1973,7 +1993,7 @@ Rules:
               </div>
             </div>
             <div className="setup-row">
-              <label>API Key</label>
+              <label>API Key <span style={{fontWeight:500, textTransform:'none', letterSpacing:0, color:'#b07cd8'}}>(optional)</span></label>
               <input
                 type="password"
                 placeholder="sk-ant-... (optional — uses fallback words without it)"
@@ -1984,51 +2004,60 @@ Rules:
           </div>
 
           <div className="header">
-            <h1>{title.display}</h1>
+            <h1><span className="title-chaos">Chaos</span> <span className="title-typewriter">Typewriter</span></h1>
             <p className="byline">Vibeshift BLR Combo</p>
           </div>
 
-          {/* Speech bubble hint — above sequencer */}
-          <div className="hint-bubble-wrap">
-            {hints.length > 0 && hints[hintLevel] ? (
-              <div className="hint-bubble">
-                <span className="hint-personality">{hints[hintLevel].personality}</span>
-                <span className="hint-text">{hints[hintLevel].text}</span>
-              </div>
-            ) : wordPhase === 'loading' ? (
-              <div className="hint-bubble waiting">
-                <span className="hint-waiting">thinking of a word...</span>
-              </div>
-            ) : wordPhase === 'solved' ? (
-              <div className="hint-bubble">
-                <span className="hint-waiting">nice! next word coming...</span>
-              </div>
-            ) : wordPhase === 'failed' ? (
-              <div className="hint-bubble">
-                <span className="hint-waiting">the word was {answer}... next one coming...</span>
-              </div>
-            ) : null}
+          {/* Hint bubble + stats row */}
+          <div className="hint-stats-row">
+            <div className="hint-bubble-wrap">
+              {hints.length > 0 && hints[hintLevel] ? (
+                <div className="hint-bubble">
+                  <span className="hint-icon">{currentPersonality === 'SARCASTIC FORTUNE COOKIE' ? '\uD83E\uDD60' : '\uD83D\uDCAC'}</span>
+                  <div className="hint-content">
+                    <span className="hint-personality">{hints[hintLevel].personality}</span>
+                    <span className="hint-text">{hints[hintLevel].text}</span>
+                  </div>
+                </div>
+              ) : wordPhase === 'loading' ? (
+                <div className="hint-bubble waiting">
+                  <span className="hint-waiting">thinking of a word...</span>
+                </div>
+              ) : wordPhase === 'solved' ? (
+                <div className="hint-bubble">
+                  <span className="hint-waiting">nice! next word coming...</span>
+                </div>
+              ) : wordPhase === 'failed' ? (
+                <div className="hint-bubble">
+                  <span className="hint-waiting">the word was {answer}... next one coming...</span>
+                </div>
+              ) : null}
+            </div>
+            <div className="game-stats">
+              <div><span className="stat-number">{wordsCompleted + 1}</span> of <span className="stat-number">{FALLBACK_WORDS.length}</span> <span className="stat-label">word</span></div>
+              <div><span className="stat-number">{totalScore}</span> <span className="stat-label">points</span></div>
+              <div><span className="stat-number">{Math.round(activeCount / maxNonWord * 100)}%</span> <span className="stat-label">chaos</span></div>
+            </div>
           </div>
 
           <div id="sequencer-container" ref={sequencerRef}></div>
 
           <div className="game-area">
-            <div className="status-msg">
-              {wordPhase === 'playing' && `Guess ${guessCount + 1}/${MAX_GUESSES} \u2022 Score: ${totalScore} \u2022 Chaos: ${Math.round(activeCount / maxNonWord * 100)}%`}
-              {wordPhase === 'solved' && <span className="win">Solved!</span>}
-              {wordPhase === 'failed' && <span className="lose">The word was {answer}</span>}
-              {wordPhase === 'loading' && 'Your game master is thinking...'}
-              {wordPhase === 'waiting' && ''}
-            </div>
-
-            <div className="breathe-hint">
-              {breatheActive ? 'breathing...' : breatheCooldown ? 'breathe recharging...' : 'press space to breathe'}
-            </div>
-
             <div className="keyboard">
               {KB_ROWS.map((row, ri) => (
                 <div key={ri} className="kb-row">
                   {row.map(key => {
+                    if (key === 'BREATHE') {
+                      return (
+                        <button
+                          key={key}
+                          className={`key breathe-key${breatheActive ? ' correct' : breatheCooldown ? ' absent' : ''}`}
+                          onClick={() => triggerBreathe()}
+                        >
+                          BREATHE
+                        </button>
+                      );
+                    }
                     let cls = 'key';
                     if (key === 'ENTER' || key === 'BACK') cls += ' wide';
                     if (letterStates[key]) cls += ` ${letterStates[key]}`;
@@ -2050,10 +2079,12 @@ Rules:
 
           {/* Start Overlay */}
           {!started && (
-            <div className="start-overlay" onClick={handleStart}>
-              <div className="start-box" onClick={e => e.stopPropagation()}>
-                <h2>Chaos Typewriter</h2>
-                <p>The sequencer builds chaos. Solve words to push it back. The AI picks each word and taunts you in a different personality. How long can you survive?</p>
+            <div className="modal-overlay" onClick={handleStart}>
+              <div className="modal guide" onClick={e => e.stopPropagation()}>
+                <h2>How to Play</h2>
+                <p>1. Guess <strong>5-letter words</strong> to survive.</p>
+                <p>2. <strong>Cryptic hints</strong> will be provided by a different personality each round.</p>
+                <p>3. <strong>Game over</strong> when the grid is overwhelmed with chaos.</p>
                 <button className="btn" onClick={handleStart}>Click to begin</button>
               </div>
             </div>
@@ -2064,13 +2095,9 @@ Rules:
             <div className="modal-overlay" onClick={() => setShowGuide(false)}>
               <div className="modal guide" onClick={e => e.stopPropagation()}>
                 <h2>How to Play</h2>
-                <p>Guess <strong>5-letter words</strong> to survive. The sequencer nodes build chaos — solve words to silence them.</p>
-                <p>Your letters appear in the <strong>center 5 columns</strong> of the sequencer strip. Type and press Enter to guess.</p>
-                <div className="twist">
-                  <strong>The twist:</strong> Keyboard letters fade over time, nodes auto-activate and creep back, and the AI game master gives cryptic hints in a different personality each round.
-                </div>
-                <p><strong>Breathe</strong> (spacebar): Silences half the nodes and pauses fading. 30s cooldown.</p>
-                <p><strong>Game over</strong> when all sequencer nodes are active.</p>
+                <p>1. Guess <strong>5-letter words</strong> to survive.</p>
+                <p>2. <strong>Cryptic hints</strong> will be provided by a different personality each round.</p>
+                <p>3. <strong>Game over</strong> when the grid is overwhelmed with chaos.</p>
                 <button className="btn" onClick={() => setShowGuide(false)}>Got it</button>
               </div>
             </div>
