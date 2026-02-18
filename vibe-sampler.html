@@ -25,6 +25,31 @@
       background: rgba(255, 255, 255, 0.4);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid rgba(200, 160, 220, 0.3);
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+    }
+
+    .nav-title {
+      text-align: center;
+    }
+
+    .nav-title h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #f06292, #ba68c8, #7e57c2, #42a5f5, #26c6da, #66bb6a, #fdd835, #ff7043);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: rainbow-shift 6s ease infinite;
+      line-height: 1.2;
+    }
+
+    .nav-title .byline {
+      font-size: 0.7rem;
+      color: #b07cd8;
+      font-weight: 500;
     }
 
     nav a {
@@ -40,29 +65,6 @@
     }
 
     nav a:hover { color: #7b40a8; text-decoration: underline; }
-
-    .header {
-      padding: 0.75rem 1.5rem 0.25rem;
-      text-align: center;
-    }
-
-    .header h1 {
-      font-size: 1.6rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, #f06292, #ba68c8, #7e57c2, #42a5f5, #26c6da, #66bb6a, #fdd835, #ff7043);
-      background-size: 200% 200%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: rainbow-shift 6s ease infinite;
-    }
-
-    .header .byline {
-      font-size: 0.95rem;
-      color: #b07cd8;
-      font-weight: 500;
-      margin-top: 0.25rem;
-    }
 
     @keyframes rainbow-shift {
       0% { background-position: 0% 50%; }
@@ -153,13 +155,13 @@
 </head>
 <body>
   <nav>
-    <a href="index.html">&larr; Back to all projects</a>
+    <a href="index.html">&larr; Back</a>
+    <div class="nav-title">
+      <h1>Intrusive Thoughts Loop</h1>
+      <span class="byline">with Upendra Vaddadi</span>
+    </div>
+    <div></div>
   </nav>
-
-  <div class="header">
-    <h1>Intrusive Thoughts Loop</h1>
-    <p class="byline">with Upendra Vaddadi</p>
-  </div>
 
   <div id="sequencer-container"></div>
 

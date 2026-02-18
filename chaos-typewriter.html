@@ -203,17 +203,20 @@
     .header {
       padding: 0.75rem 1.5rem 0.25rem;
       text-align: center;
+      margin-bottom: 0.5rem;
     }
 
     .header h1 {
       font-size: 1.6rem;
       font-weight: 700;
-      background: linear-gradient(135deg, #f06292, #ba68c8, #7e57c2, #42a5f5, #26c6da, #66bb6a, #fdd835, #ff7043);
-      background-size: 200% 200%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: rainbow-shift 6s ease infinite;
+    }
+
+    .header h1 .title-chaos {
+      color: #4a3f6b;
+    }
+
+    .header h1 .title-typewriter {
+      color: #b07cd8;
     }
 
     .header .byline {
@@ -223,21 +226,17 @@
       margin-top: 0.25rem;
     }
 
-    @keyframes rainbow-shift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
 
     /* Sequencer canvas */
     #sequencer-container {
-      display: flex;
-      justify-content: center;
-      padding: 0.5rem 1rem;
+      width: 100%;
+      min-height: 50px;
     }
 
     #sequencer-container canvas {
       display: block;
+      width: 100%;
+      margin: 0 auto;
       border-radius: 12px;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
@@ -247,39 +246,42 @@
     .game-area {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      padding: 0.5rem 1rem;
+      align-items: stretch;
       gap: 0.5rem;
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0 1rem;
     }
 
-    .status-msg {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #b07cd8;
-      min-height: 1.4em;
-      text-align: center;
-    }
-
-    .status-msg.win { color: #5aae72; }
-    .status-msg.lose { color: #d47a9a; }
 
     /* Keyboard */
     .keyboard {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: stretch;
       gap: 6px;
-      margin-top: 0.25rem;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0.5rem 1rem;
+      padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+      z-index: 10;
     }
 
     .kb-row {
       display: flex;
       gap: 5px;
+      justify-content: center;
     }
 
     .key {
       height: 50px;
       min-width: 36px;
+      flex: 1;
       padding: 0 10px;
       border-radius: 8px;
       border: none;
@@ -299,7 +301,17 @@
     .key:hover { background: rgba(255, 255, 255, 0.75); }
     .key:active { transform: scale(0.95); }
 
-    .key.wide { min-width: 60px; font-size: 0.7rem; }
+    .key.wide {
+      flex: 0 0 60px;
+      font-size: 0.7rem;
+    }
+    .key.breathe-key {
+      flex: 1;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
 
     .key.faded {
       opacity: 0.15;
@@ -322,74 +334,118 @@
       color: #8a7ba0;
     }
 
-    /* Speech bubble hint */
-    .hint-bubble-wrap {
+    /* Hint + stats row */
+    .hint-stats-row {
       display: flex;
-      justify-content: center;
-      margin: 0.5rem 1rem 0;
+      align-items: flex-start;
+      justify-content: space-between;
       min-height: 3em;
+      width: 100%;
+      gap: 1rem;
+    }
+
+    .hint-bubble-wrap {
+      flex: 1;
+      min-width: 0;
+      height: 3.2rem;
     }
 
     .hint-bubble {
-      position: relative;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
       background: rgba(255, 255, 255, 0.55);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(200, 160, 220, 0.35);
-      border-radius: 16px;
-      padding: 0.6rem 1.2rem;
-      max-width: 500px;
-      text-align: center;
-      box-shadow: 0 2px 12px rgba(100, 60, 140, 0.08);
-      transition: opacity 0.3s ease, transform 0.3s ease;
+      border: none;
+      border-radius: 8px;
+      padding: 0.5rem 0.8rem;
+      position: relative;
+      margin-left: 2.6rem;
+      height: 100%;
+      box-sizing: border-box;
     }
 
-    .hint-bubble::after {
+    .hint-bubble::before {
       content: '';
       position: absolute;
-      bottom: -8px;
-      left: 50%;
-      transform: translateX(-50%);
+      left: -8px;
+      top: 12px;
       width: 0;
       height: 0;
-      border-left: 8px solid transparent;
-      border-right: 8px solid transparent;
-      border-top: 8px solid rgba(255, 255, 255, 0.55);
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+      border-right: 8px solid rgba(255, 255, 255, 0.55);
+    }
+
+    .hint-icon {
+      position: absolute;
+      left: -2.4rem;
+      top: 0;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .hint-content {
+      flex: 1;
+      min-width: 0;
     }
 
     .hint-bubble .hint-personality {
       display: block;
       font-weight: 700;
-      font-size: 0.75rem;
-      color: #e91e63;
-      margin-bottom: 0.2rem;
+      font-size: 0.7rem;
+      color: #4a3f6b;
+      margin-bottom: 0.15rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
 
     .hint-bubble .hint-text {
       color: #4a3f6b;
-      font-size: 0.95rem;
+      font-size: 0.85rem;
       font-weight: 500;
       line-height: 1.4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .hint-bubble.waiting {
-      border-style: dashed;
+      opacity: 0.7;
+      align-items: center;
     }
 
     .hint-bubble .hint-waiting {
       color: #b07cd8;
-      font-style: italic;
+      font-style: normal;
       font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      height: 100%;
     }
 
-    /* Breathe indicator */
-    .breathe-hint {
-      font-size: 0.75rem;
-      color: rgba(156, 107, 196, 0.6);
-      text-align: center;
-      min-height: 1em;
+    .game-stats {
+      flex-shrink: 0;
+      text-align: right;
+      font-size: 0.7rem;
+      color: #8a7ba0;
+      line-height: 1.4;
+      white-space: nowrap;
+      padding-top: 0.15rem;
+      padding-right: 0.5rem;
     }
+
+    .game-stats .stat-number {
+      font-weight: 700;
+      color: #4a3f6b;
+    }
+
+    .game-stats .stat-label {
+      font-weight: 500;
+      color: #b07cd8;
+    }
+
 
     /* Modals */
     .modal-overlay {
@@ -424,9 +480,15 @@
       text-align: left;
     }
 
+    .modal.guide .btn {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
     .modal.guide h2 {
       text-align: center;
-      margin-bottom: 0.75rem;
+      margin-bottom: 1.25rem;
     }
 
     .modal.guide p {
@@ -619,150 +681,89 @@
   <div id="root"></div>
 
   <script>
-  // ── Audio Engine (Tone.js) ────────────────────────────────────
-  const VIBES = {
-    glitchy: {
-      label: 'Glitchy', desc: 'Bit-crushed chaos',
-      scale: [0, 1, 3, 5, 6, 8, 10, 12, 13, 15, 17, 18, 20, 22, 23, 25], // chromatic-ish
-      makeSynth(fx) {
-        return new Tone.MetalSynth({
-          frequency: 200,
-          envelope: { attack: 0.001, decay: 0.2, release: 0.1 },
-          harmonicity: 5.1,
-          modulationIndex: 32,
-          resonance: 4000,
-          octaves: 1.5,
-          volume: -12,
-        }).connect(fx);
-      },
-      makeFx() {
-        const crusher = new Tone.BitCrusher(4);
-        const pingPong = new Tone.PingPongDelay('8n', 0.3);
-        pingPong.wet.value = 0.25;
-        crusher.connect(pingPong);
-        pingPong.toDestination();
-        return crusher;
-      },
-      triggerNote(synth, freq) {
-        synth.frequency = freq;
-        synth.triggerAttackRelease('16n');
-      },
+  // ── Audio Engine (Tone.js) — 5 voices per vibe ─────────────────
+  // Lydian scale degrees for 20 rows (row 0 = high, row 19 = low), ~2.5 octaves
+  const SCALE = [33,31,30,28,26,24,23,21,19,18,16,14,12,11,9,7,6,4,2,0];
+
+  // Piano — each block gets its own PolySynth + FX instance
+  function makePianoVoice() {
+    return {
+      makeSynth(fx) { return new Tone.PolySynth(Tone.Synth, { maxPolyphony: 6, oscillator: { type: 'triangle' }, envelope: { attack: 0.005, decay: 0.3, sustain: 0.08, release: 0.8 }, volume: -14 }).connect(fx); },
+      makeFx() { const d = new Tone.FeedbackDelay('8n', 0.12); d.wet.value = 0.15; d.toDestination(); return d; },
+      trigger(synth, freq) { synth.triggerAttackRelease(freq, '8n'); },
+    };
+  }
+  const VOICES = [makePianoVoice(), makePianoVoice(), makePianoVoice(), makePianoVoice(), makePianoVoice()];
+
+  /* — 5-voice variation (commented out) —
+  const VOICES = [
+    { // block 0 — warm pad
+      makeSynth(fx) { return new Tone.FMSynth({ harmonicity: 2, modulationIndex: 3, oscillator: { type: 'sine' }, envelope: { attack: 0.3, decay: 0.5, sustain: 0.4, release: 1.5 }, volume: -18 }).connect(fx); },
+      makeFx() { const d = new Tone.FeedbackDelay('2n', 0.2); d.wet.value = 0.35; d.toDestination(); return d; },
+      trigger(synth, freq) { synth.triggerAttackRelease(freq, '4n'); },
     },
-    calm: {
-      label: 'Calm', desc: 'Soft & warm',
-      scale: [0, 3, 5, 7, 10, 12, 15, 17, 19, 22, 24, 27, 29, 31, 34, 36], // pentatonic minor
-      makeSynth(fx) {
-        return new Tone.FMSynth({
-          harmonicity: 3,
-          modulationIndex: 10,
-          oscillator: { type: 'sine' },
-          envelope: { attack: 0.05, decay: 0.3, sustain: 0.1, release: 0.8 },
-          modulation: { type: 'triangle' },
-          modulationEnvelope: { attack: 0.1, decay: 0.2, sustain: 0.3, release: 0.5 },
-          volume: -14,
-        }).connect(fx);
-      },
-      makeFx() {
-        const reverb = new Tone.Reverb({ decay: 3, wet: 0.5 });
-        const delay = new Tone.FeedbackDelay('4n', 0.2);
-        delay.wet.value = 0.15;
-        reverb.connect(delay);
-        delay.toDestination();
-        return reverb;
-      },
-      triggerNote(synth, freq) {
-        synth.triggerAttackRelease(freq, '8n');
-      },
+    { // block 1 — bell / chime
+      makeSynth(fx) { return new Tone.FMSynth({ harmonicity: 8, modulationIndex: 1.5, oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 1, sustain: 0, release: 0.8 }, volume: -16 }).connect(fx); },
+      makeFx() { const c = new Tone.Chorus(4, 2.5, 0.5); c.wet.value = 0.4; c.start(); c.toDestination(); return c; },
+      trigger(synth, freq) { synth.triggerAttackRelease(freq, '8n'); },
     },
-    dreamy: {
-      label: 'Dreamy', desc: 'Floaty plucks',
-      scale: [0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23, 24, 26], // lydian
-      makeSynth(fx) {
-        return new Tone.PluckSynth({
-          attackNoise: 1,
-          dampening: 4000,
-          resonance: 0.95,
-          volume: -10,
-        }).connect(fx);
-      },
-      makeFx() {
-        const reverb = new Tone.Reverb({ decay: 5, wet: 0.6 });
-        const chorus = new Tone.Chorus(4, 2.5, 0.5);
-        chorus.wet.value = 0.4;
-        chorus.start();
-        reverb.connect(chorus);
-        chorus.toDestination();
-        return reverb;
-      },
-      triggerNote(synth, freq) {
-        synth.triggerAttack(freq);
-      },
+    { // block 2 — shimmer pluck
+      makeSynth(fx) { return new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.003, decay: 0.3, sustain: 0, release: 0.5 }, volume: -12 }).connect(fx); },
+      makeFx() { const c = new Tone.Chorus(4, 2.5, 0.5); c.wet.value = 0.4; c.start(); const d = new Tone.FeedbackDelay('4n', 0.3); d.wet.value = 0.3; c.connect(d); d.toDestination(); return c; },
+      trigger(synth, freq) { synth.triggerAttackRelease(freq, '8n'); },
     },
-    tense: {
-      label: 'Tense', desc: 'Dark & gritty',
-      scale: [0, 1, 3, 5, 7, 8, 10, 12, 13, 15, 17, 19, 20, 22, 24, 25], // phrygian
-      makeSynth(fx) {
-        return new Tone.MonoSynth({
-          oscillator: { type: 'sawtooth' },
-          filter: { Q: 6, type: 'lowpass', rolloff: -24 },
-          envelope: { attack: 0.005, decay: 0.2, sustain: 0.2, release: 0.4 },
-          filterEnvelope: { attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.4, baseFrequency: 200, octaves: 4 },
-          volume: -16,
-        }).connect(fx);
-      },
-      makeFx() {
-        const dist = new Tone.Distortion(0.4);
-        const filter = new Tone.AutoFilter('2n').start();
-        filter.wet.value = 0.3;
-        dist.connect(filter);
-        filter.toDestination();
-        return dist;
-      },
-      triggerNote(synth, freq) {
-        synth.triggerAttackRelease(freq, '16n');
-      },
+    { // block 3 — keys
+      makeSynth(fx) { return new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.08, decay: 0.4, sustain: 0.1, release: 1 }, volume: -14 }).connect(fx); },
+      makeFx() { const d = new Tone.FeedbackDelay('4n', 0.2); d.wet.value = 0.2; d.toDestination(); return d; },
+      trigger(synth, freq) { synth.triggerAttackRelease(freq, '8n'); },
     },
-  };
+    { // block 4 — ethereal strings
+      makeSynth(fx) { return new Tone.FMSynth({ harmonicity: 3, modulationIndex: 1, oscillator: { type: 'sine' }, envelope: { attack: 0.4, decay: 0.8, sustain: 0.5, release: 2 }, volume: -16 }).connect(fx); },
+      makeFx() { const c = new Tone.Chorus(2, 4, 0.6); c.wet.value = 0.5; c.start(); c.toDestination(); return c; },
+      trigger(synth, freq) { synth.triggerAttackRelease(freq, '2n'); },
+    },
+  ];
+  */
 
   const AudioEngine = {
     ready: false,
-    synth: null,
-    fx: null,
+    synths: [null, null, null, null, null],
+    fxChains: [null, null, null, null, null],
     drone: null,
     droneGain: null,
-    currentVibe: null,
+    initialized: false,
     baseFreq: 220,
 
     async init() {
       if (this.ready) return;
       await Tone.start();
       this.ready = true;
+      this.setupVoices();
     },
 
-    setVibe(vibeKey) {
-      if (this.currentVibe === vibeKey) return;
-      // Dispose old synth/fx
-      if (this.synth) { try { this.synth.dispose(); } catch(e) {} }
-      if (this.fx) { try { this.fx.dispose(); } catch(e) {} }
-
-      const vibe = VIBES[vibeKey];
-      this.fx = vibe.makeFx();
-      this.synth = vibe.makeSynth(this.fx);
-      this.currentVibe = vibeKey;
+    setupVoices() {
+      if (this.initialized) return;
+      for (let i = 0; i < 5; i++) {
+        this.fxChains[i] = VOICES[i].makeFx();
+        this.synths[i] = VOICES[i].makeSynth(this.fxChains[i]);
+      }
+      this.initialized = true;
     },
 
-    getFreq(stepIndex) {
-      const vibe = VIBES[this.currentVibe];
-      if (!vibe || stepIndex < 0 || stepIndex >= vibe.scale.length) return this.baseFreq;
-      return this.baseFreq * Math.pow(2, vibe.scale[stepIndex] / 12);
+    getFreq(row) {
+      if (row < 0 || row >= SCALE.length) return this.baseFreq;
+      return this.baseFreq * Math.pow(2, SCALE[row] / 12);
     },
 
-    playNote(stepIndex, chaosLevel) {
-      if (!this.ready || !this.synth || !this.currentVibe) return;
-      const freq = this.getFreq(stepIndex);
-      const vibe = VIBES[this.currentVibe];
+    playNote(col, row) {
+      if (!this.ready) return;
+      const block = Math.floor(col / COLS_PER_LETTER);
+      const synth = this.synths[block];
+      const voiceCfg = VOICES[block];
+      if (!synth || !voiceCfg) return;
       try {
-        vibe.triggerNote(this.synth, freq);
+        const freq = this.getFreq(row);
+        voiceCfg.trigger(synth, freq);
       } catch(e) {}
     },
 
@@ -780,7 +781,6 @@
         volume: -18,
       }).connect(this.droneGain);
 
-      // LFO for breathing feel
       this._droneLfo = new Tone.LFO('0.25hz', -20, -14).start();
       this._droneLfo.connect(this.drone.volume);
 
@@ -807,9 +807,11 @@
 
     setBreathe(active) {
       if (!this.ready) return;
-      // Duck the synth volume during breathe
-      if (this.synth) {
-        this.synth.volume.rampTo(active ? -40 : this.synth.volume.value > -30 ? this.synth.volume.value : -12, 0.8);
+      // Duck all voice volumes during breathe
+      for (let i = 0; i < 5; i++) {
+        if (this.voices[i]) {
+          try { this.voices[i].volume.rampTo(active ? -40 : -14, 0.8); } catch(e) {}
+        }
       }
       if (active) this.startDrone();
       else this.stopDrone();
@@ -820,14 +822,93 @@
   <script type="text/babel">
     const { useState, useRef, useCallback, useEffect } = React;
 
-    const NUM_STEPS = 16;
-    const WORD_SLOTS = [5, 6, 7, 8, 9]; // center 5 columns for word display
+    // Grid dimensions: 5 letter blocks, each 7 rows x 5 cols
+    const GRID_ROWS = 20;
+    const COLS_PER_LETTER = 10;
+    const NUM_LETTERS = 5;
+    const TOTAL_COLS = NUM_LETTERS * COLS_PER_LETTER; // 55
+    const TOTAL_CELLS = TOTAL_COLS * GRID_ROWS; // 1100
+    const BLOCK_GAP = 12; // px gap between letter blocks
     const MAX_GUESSES = 6;
+
+    // Personality avatar images
+    const PERSONALITY_AVATARS = {
+      'librarian':   'public/bored-librarian.png',
+      'lighthouse':  'public/Grumpy-Lighthouse-Keeper.png',
+      'pigeon':      'public/confused-pigeon.png',
+      'cactus':      'public/Philosophical-Cactus.png',
+    };
+    const AVATAR_KEYS = Object.keys(PERSONALITY_AVATARS);
+
+    function getAvatarSrc(personality) {
+      if (!personality) return PERSONALITY_AVATARS['pigeon'];
+      const lower = personality.toLowerCase();
+      for (const key of AVATAR_KEYS) {
+        if (lower.includes(key)) return PERSONALITY_AVATARS[key];
+      }
+      // Consistent random pick based on personality string
+      const hash = personality.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+      return Object.values(PERSONALITY_AVATARS)[hash % AVATAR_KEYS.length];
+    }
+
+    // Helpers
+    function colToBlock(col) { return Math.floor(col / COLS_PER_LETTER); }
+    function colToSubCol(col) { return col % COLS_PER_LETTER; }
+    function isLetterPixel(col, row, input) {
+      const block = colToBlock(col);
+      const letter = input && input[block];
+      if (!letter || !PIXEL_FONT[letter]) return false;
+      return PIXEL_FONT[letter][row][colToSubCol(col)] === 1;
+    }
+
+    // Base pixel font: 5x7, scaled to 10x20 (2x each dim + 3 rows padding top/bottom)
+    const PIXEL_FONT_BASE = {
+      'A': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[0,0,0,0,0]],
+      'B': [[1,1,1,1,0],[1,0,0,0,1],[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[0,0,0,0,0]],
+      'C': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]],
+      'D': [[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[0,0,0,0,0]],
+      'E': [[1,1,1,1,1],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,1],[0,0,0,0,0]],
+      'F': [[1,1,1,1,1],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[0,0,0,0,0]],
+      'G': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,0],[1,0,1,1,1],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]],
+      'H': [[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,0,0,0,0]],
+      'I': [[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[1,1,1,1,1],[0,0,0,0,0]],
+      'J': [[0,0,1,1,1],[0,0,0,1,0],[0,0,0,1,0],[0,0,0,1,0],[1,0,0,1,0],[0,1,1,0,0],[0,0,0,0,0]],
+      'K': [[1,0,0,0,1],[1,0,0,1,0],[1,0,1,0,0],[1,1,0,0,0],[1,0,1,0,0],[1,0,0,1,0],[1,0,0,0,1]],
+      'L': [[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,1],[0,0,0,0,0]],
+      'M': [[1,0,0,0,1],[1,1,0,1,1],[1,0,1,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,0,0,0,0]],
+      'N': [[1,0,0,0,1],[1,1,0,0,1],[1,0,1,0,1],[1,0,0,1,1],[1,0,0,0,1],[1,0,0,0,1],[0,0,0,0,0]],
+      'O': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]],
+      'P': [[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[0,0,0,0,0]],
+      'Q': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,1,0,1],[1,0,0,1,0],[0,1,1,0,1],[0,0,0,0,0]],
+      'R': [[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[1,0,0,1,0],[1,0,0,0,1],[0,0,0,0,0]],
+      'S': [[0,1,1,1,1],[1,0,0,0,0],[0,1,1,1,0],[0,0,0,0,1],[0,0,0,0,1],[1,1,1,1,0],[0,0,0,0,0]],
+      'T': [[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,0,0,0]],
+      'U': [[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]],
+      'V': [[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,0,1,0],[0,1,0,1,0],[0,0,1,0,0],[0,0,0,0,0]],
+      'W': [[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,1,0,1],[1,1,0,1,1],[1,0,0,0,1],[0,0,0,0,0]],
+      'X': [[1,0,0,0,1],[0,1,0,1,0],[0,0,1,0,0],[0,0,1,0,0],[0,1,0,1,0],[1,0,0,0,1],[0,0,0,0,0]],
+      'Y': [[1,0,0,0,1],[0,1,0,1,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,0,0,0]],
+      'Z': [[1,1,1,1,1],[0,0,0,1,0],[0,0,1,0,0],[0,1,0,0,0],[1,0,0,0,0],[1,1,1,1,1],[0,0,0,0,0]],
+    };
+    // Scale 5x7 → 10x20 (2x width, nearest-neighbor stretch to fill full height)
+    const PIXEL_FONT = {};
+    for (const [letter, baseRows] of Object.entries(PIXEL_FONT_BASE)) {
+      // Strip trailing blank rows so letters fill the full grid height
+      let rows = [...baseRows];
+      while (rows.length > 1 && rows[rows.length - 1].every(p => p === 0)) rows.pop();
+      const big = [];
+      for (let r = 0; r < GRID_ROWS; r++) {
+        const srcRow = Math.floor(r * rows.length / GRID_ROWS);
+        big.push(rows[srcRow].flatMap(px => [px, px]));
+      }
+      PIXEL_FONT[letter] = big;
+    }
 
     const KB_ROWS = [
       ['Q','W','E','R','T','Y','U','I','O','P'],
       ['A','S','D','F','G','H','J','K','L'],
-      ['ENTER','Z','X','C','V','B','N','M','BACK'],
+      ['Z','X','C','V','B','N','M'],
+      ['BACK','BREATHE','ENTER'],
     ];
 
     const FALLBACK_WORDS = [
@@ -952,153 +1033,149 @@ Rules:
 
     function createSequencerSketch(containerEl, gameStateRef, callbacksRef) {
       let particles = [];
-      let canvasW, canvasH;
-      const COL_GAP = 4;
+      let canvasW, canvasH, cellSize, cellGap;
+      const MARGIN = 2;
 
-      function computeSize(p) {
-        canvasW = Math.min(containerEl.clientWidth || 600, 700);
-        canvasH = 140;
+      function computeSize() {
+        canvasW = containerEl.clientWidth || containerEl.parentElement?.clientWidth || Math.min(window.innerWidth - 32, 700);
+        cellGap = 2;
+        const totalInterCellGaps = (TOTAL_COLS - NUM_LETTERS) * cellGap;
+        const totalBlockGaps = (NUM_LETTERS - 1) * BLOCK_GAP;
+        const availW = canvasW - 2 * MARGIN - totalInterCellGaps - totalBlockGaps;
+        cellSize = Math.floor(availW / TOTAL_COLS);
+        canvasH = GRID_ROWS * cellSize + (GRID_ROWS - 1) * cellGap + 2 * MARGIN;
+      }
+
+      function getCellPos(col, row) {
+        const block = colToBlock(col);
+        const subCol = colToSubCol(col);
+        const x = MARGIN + block * (COLS_PER_LETTER * cellSize + (COLS_PER_LETTER - 1) * cellGap + BLOCK_GAP) + subCol * (cellSize + cellGap);
+        const y = MARGIN + row * (cellSize + cellGap);
+        return { x, y };
       }
 
       const sketch = (p) => {
         p.setup = function() {
-          computeSize(p);
+          computeSize();
+          // If container has no width yet, retry after layout
+          if (canvasW < 100) {
+            setTimeout(() => {
+              computeSize();
+              p.resizeCanvas(canvasW, canvasH);
+            }, 100);
+          }
           const canvas = p.createCanvas(canvasW, canvasH);
           canvas.parent(containerEl);
         };
 
         p.windowResized = function() {
-          computeSize(p);
+          computeSize();
           p.resizeCanvas(canvasW, canvasH);
         };
 
         p.draw = function() {
           const state = gameStateRef.current;
-          if (!state.started) {
-            p.clear();
-            return;
-          }
-
           const chaos = state.chaosLevel;
-
-          // Trail effect
-          const trailAlpha = p.lerp(240, 60, chaos);
-          p.background(252, 228, 236, trailAlpha);
-
-          const colW = (canvasW - (NUM_STEPS + 1) * COL_GAP) / NUM_STEPS;
           const now = p.millis();
 
-          // Advance playhead
-          const bpm = 100 + chaos * 40;
-          const stepInterval = 60000 / bpm / 4;
+          // Transparent background
+          p.clear();
 
-          if (now - state.lastStepTime > stepInterval) {
-            state.currentStep = (state.currentStep + 1) % NUM_STEPS;
-            state.lastStepTime = now;
-            if (state.nodes[state.currentStep] && !WORD_SLOTS.includes(state.currentStep)) {
-              AudioEngine.playNote(state.currentStep, chaos);
+          // Advance playhead (only when game is running)
+          if (state.started) {
+            const bpm = 100 + chaos * 40;
+            const stepInterval = 60000 / bpm / 4;
+
+            if (now - state.lastStepTime > stepInterval) {
+              state.currentStep = (state.currentStep + 1) % TOTAL_COLS;
+              state.lastStepTime = now;
+              for (let row = 0; row < GRID_ROWS; row++) {
+                if (state.nodes[state.currentStep] && state.nodes[state.currentStep][row]) {
+                  AudioEngine.playNote(state.currentStep, row);
+                }
+              }
             }
           }
 
-          // Draw columns
-          for (let i = 0; i < NUM_STEPS; i++) {
-            const x = COL_GAP + i * (colW + COL_GAP);
-            const isWordSlot = WORD_SLOTS.includes(i);
-            const wordIdx = WORD_SLOTS.indexOf(i);
-            const isActive = state.nodes[i];
-            const isCurrent = i === state.currentStep;
+          // Playhead column highlight
+          if (state.started && state.currentStep >= 0) {
+            const { x: phX } = getCellPos(state.currentStep, 0);
+            const colH = GRID_ROWS * (cellSize + cellGap) - cellGap;
+            // Filled glow behind
+            p.noStroke();
+            p.fill(160, 120, 200, 50);
+            p.rect(phX - 3, MARGIN - 3, cellSize + 6, colH + 6, 5);
+            // Border outline
+            p.noFill();
+            p.stroke(140, 100, 180, 120);
+            p.strokeWeight(2);
+            p.rect(phX - 3, MARGIN - 3, cellSize + 6, colH + 6, 5);
+          }
 
-            if (isWordSlot) {
-              // Word slot column
-              const guessResult = state.currentGuessResult;
-              const currentWord = state.currentInput;
-              const letter = wordIdx < currentWord.length ? currentWord[wordIdx] : '';
-              const resultState = guessResult && guessResult[wordIdx];
+          // Draw cells
+          const guessResult = state.currentGuessResult;
+          const input = state.currentInput || '';
 
-              // Background
-              let bgR, bgG, bgB, bgA;
-              if (resultState === 'correct') {
-                bgR = 160; bgG = 216; bgB = 192; bgA = 220;
-              } else if (resultState === 'present') {
-                bgR = 232; bgG = 160; bgB = 191; bgA = 220;
-              } else if (resultState === 'absent') {
-                bgR = 186; bgG = 140; bgB = 214; bgA = 60;
+          for (let col = 0; col < TOTAL_COLS; col++) {
+            const block = colToBlock(col);
+            const subCol = colToSubCol(col);
+            const isCurrent = col === state.currentStep;
+
+            for (let row = 0; row < GRID_ROWS; row++) {
+              const { x, y } = getCellPos(col, row);
+              const isActive = state.nodes[col] && state.nodes[col][row];
+              const isPixel = isLetterPixel(col, row, input);
+              const resultState = guessResult && guessResult[block];
+
+              let r, g, b, a;
+              let sr, sg, sb, sa; // stroke color
+
+              if (isPixel && resultState === 'correct') {
+                r = 110; g = 195; b = 150; a = 160;
+                sr = 80; sg = 170; sb = 120; sa = 120;
+              } else if (isPixel && resultState === 'present') {
+                r = 210; g = 140; b = 175; a = 160;
+                sr = 180; sg = 110; sb = 145; sa = 120;
+              } else if (isPixel && resultState === 'absent') {
+                r = 160; g = 130; b = 180; a = 110;
+                sr = 140; sg = 110; sb = 160; sa = 90;
+              } else if (isPixel) {
+                // Typed letter — cool gray-purple, subtle
+                r = 100; g = 90; b = 120; a = 90;
+                sr = 80; sg = 70; sb = 100; sa = 100;
+              } else if (isActive) {
+                // Chaos node — warm pink-purple, pulsing
+                const pulse = Math.sin(now * 0.004 + col * 0.7 + row * 0.3) * 0.15 + 1;
+                r = p.lerp(200, 230, chaos);
+                g = p.lerp(100, 80, chaos);
+                b = p.lerp(160, 140, chaos);
+                a = (120 + chaos * 60) * pulse;
+                sr = r - 20; sg = g - 10; sb = b - 10; sa = (100 + chaos * 40) * pulse;
               } else {
-                bgR = 255; bgG = 255; bgB = 255; bgA = isActive ? 100 : 60;
+                // Empty cell — light, minimal
+                r = 230; g = 220; b = 235; a = 60;
+                sr = 190; sg = 175; sb = 200; sa = 50;
               }
 
-              // Playhead highlight
-              if (isCurrent) {
-                bgA = Math.min(255, bgA + 60);
+              // Playhead column — draw highlight behind cells
+              if (isCurrent && state.started) {
+                // Bright cell overlay
+                a = Math.min(255, a + 40);
               }
 
-              p.noStroke();
-              p.fill(bgR, bgG, bgB, bgA);
-              p.rect(x, 10, colW, canvasH - 20, 8);
+              p.fill(r, g, b, a);
+              p.stroke(sr, sg, sb, sa);
+              p.strokeWeight(1);
+              p.rect(x, y, cellSize, cellSize, cellSize * 0.2);
 
-              // Word slot border
-              p.noFill();
-              p.stroke(186, 140, 214, 120);
-              p.strokeWeight(2);
-              p.rect(x, 10, colW, canvasH - 20, 8);
-
-              // Letter
-              if (letter) {
-                p.noStroke();
-                p.fill(74, 63, 107, 230);
-                p.textAlign(p.CENTER, p.CENTER);
-                p.textSize(Math.min(colW * 0.55, 24));
-                p.textStyle(p.BOLD);
-                p.text(letter, x + colW / 2, canvasH / 2);
-              }
-            } else {
-              // Sequencer node column
-              if (isActive) {
-                const pulse = Math.sin(now * 0.004 + i * 0.5) * 0.15 + 1;
-                const r = p.lerp(156, 240, chaos);
-                const g = p.lerp(107, 98, chaos);
-                const b = p.lerp(196, 180, chaos);
-
-                let jx = 0, jy = 0;
-                if (chaos > 0.5) {
-                  const j = (chaos - 0.5) * 4;
-                  jx = p.random(-j, j);
-                  jy = p.random(-j, j);
-                }
-
-                // Glow
-                p.noStroke();
-                p.fill(r, g, b, 30 + chaos * 50);
-                p.rect(x + jx - 4, 5 + jy, colW + 8, canvasH - 10, 10);
-
-                // Bar
-                const barH = (canvasH - 30) * pulse;
-                const barY = (canvasH - barH) / 2;
-                p.fill(r, g, b, 160 + chaos * 60);
-                p.rect(x + jx, barY + jy, colW, barH, 8);
-
-                // Particles
-                if (Math.random() < 0.03 + chaos * 0.06) {
-                  particles.push({
-                    x: x + colW / 2, y: canvasH / 2,
-                    vx: p.random(-1.5, 1.5), vy: p.random(-2, -0.5),
-                    life: 1, decay: p.random(0.015, 0.04),
-                    r, g, b, size: p.random(2, 5)
-                  });
-                }
-              } else {
-                // Inactive
-                p.noStroke();
-                p.fill(186, 140, 214, 35);
-                p.rect(x, canvasH / 2 - 8, colW, 16, 6);
-              }
-
-              // Playhead
-              if (isCurrent) {
-                p.noFill();
-                p.stroke(255, 255, 255, 200);
-                p.strokeWeight(2);
-                p.rect(x - 2, 6, colW + 4, canvasH - 12, 10);
+              // Particles from active cells
+              if (isActive && Math.random() < 0.005 + chaos * 0.01) {
+                particles.push({
+                  x: x + cellSize / 2, y: y + cellSize / 2,
+                  vx: p.random(-1, 1), vy: p.random(-1.5, -0.3),
+                  life: 1, decay: p.random(0.02, 0.05),
+                  r, g, b, size: p.random(2, 4)
+                });
               }
             }
           }
@@ -1107,7 +1184,7 @@ Rules:
           if (state.breatheActive) {
             p.noStroke();
             p.fill(102, 187, 106, 15 + Math.sin(now * 0.003) * 10);
-            p.rect(0, 0, canvasW, canvasH, 12);
+            p.rect(0, 0, canvasW, canvasH, 8);
           }
 
           // Particles
@@ -1125,27 +1202,25 @@ Rules:
 
         p.mousePressed = function() {
           if (!gameStateRef.current.started) return;
-          // Check if click is on a non-word-slot active node
-          const colW = (canvasW - (NUM_STEPS + 1) * COL_GAP) / NUM_STEPS;
-          for (let i = 0; i < NUM_STEPS; i++) {
-            if (WORD_SLOTS.includes(i)) continue;
-            const x = COL_GAP + i * (colW + COL_GAP);
-            if (p.mouseX >= x && p.mouseX <= x + colW && p.mouseY >= 5 && p.mouseY <= canvasH - 5) {
-              if (gameStateRef.current.nodes[i]) {
-                callbacksRef.current.onNodeClick(i);
-                // Burst particles
-                const chaos = gameStateRef.current.chaosLevel;
-                for (let j = 0; j < 8; j++) {
-                  const angle = Math.random() * Math.PI * 2;
-                  const speed = Math.random() * 3 + 1;
-                  particles.push({
-                    x: x + colW / 2, y: canvasH / 2,
-                    vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-                    life: 1, decay: 0.02 + Math.random() * 0.03,
-                    r: 102, g: 187, b: 106, size: 3 + Math.random() * 4
-                  });
+          for (let col = 0; col < TOTAL_COLS; col++) {
+            for (let row = 0; row < GRID_ROWS; row++) {
+              const { x, y } = getCellPos(col, row);
+              if (p.mouseX >= x && p.mouseX <= x + cellSize && p.mouseY >= y && p.mouseY <= y + cellSize) {
+                if (gameStateRef.current.nodes[col] && gameStateRef.current.nodes[col][row]) {
+                  callbacksRef.current.onNodeClick(col, row);
+                  // Burst particles
+                  for (let j = 0; j < 6; j++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 2.5 + 0.5;
+                    particles.push({
+                      x: x + cellSize / 2, y: y + cellSize / 2,
+                      vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+                      life: 1, decay: 0.025 + Math.random() * 0.03,
+                      r: 102, g: 187, b: 106, size: 2 + Math.random() * 3
+                    });
+                  }
+                  return;
                 }
-                return;
               }
             }
           }
@@ -1170,21 +1245,21 @@ Rules:
       chill: {
         label: 'Chill', desc: 'No time pressure',
         fadeMin: 8000, fadeMax: 12000, fadeChaosScale: 0.2,
-        activateMin: 4000, activateBase: 10000, activateScale: 100,
+        activateInterval: 8000, batchSize: 10,
         creepDelay: 10000, creepRand: 10000, creepProb: 0.008,
         graceDelay: 12000,
       },
       normal: {
         label: 'Normal', desc: 'Balanced challenge',
         fadeMin: 4000, fadeMax: 7000, fadeChaosScale: 0.4,
-        activateMin: 2000, activateBase: 6000, activateScale: 150,
+        activateInterval: 4000, batchSize: 40,
         creepDelay: 6000, creepRand: 8000, creepProb: 0.015,
         graceDelay: 8000,
       },
       chaos: {
         label: 'Chaos', desc: 'Good luck',
         fadeMin: 1500, fadeMax: 4000, fadeChaosScale: 0.6,
-        activateMin: 600, activateBase: 3000, activateScale: 200,
+        activateInterval: 2000, batchSize: 40,
         creepDelay: 2000, creepRand: 4000, creepProb: 0.04,
         graceDelay: 4000,
       },
@@ -1194,7 +1269,6 @@ Rules:
       const [setupOpen, setSetupOpen] = useState(false);
       const [apiKey, setApiKey] = useState('');
       const [difficulty, setDifficulty] = useState('normal');
-      const [musicVibe, setMusicVibe] = useState('glitchy');
       const [started, setStarted] = useState(false);
       const [showGuide, setShowGuide] = useState(false);
       const [showGameOver, setShowGameOver] = useState(false);
@@ -1210,7 +1284,7 @@ Rules:
       const [wordPhase, setWordPhase] = useState('waiting'); // waiting | loading | playing | solved | failed
 
       // Sequencer state
-      const [nodes, setNodes] = useState(new Array(NUM_STEPS).fill(false));
+      const [nodes, setNodes] = useState(() => Array.from({ length: TOTAL_COLS }, () => new Array(GRID_ROWS).fill(false)));
       const [chaosLevel, setChaosLevel] = useState(0);
       const [breatheActive, setBreatheActive] = useState(false);
       const [breatheCooldown, setBreatheOnCooldown] = useState(false);
@@ -1239,12 +1313,12 @@ Rules:
       const silencedAtRef = useRef({});
       const abortRef = useRef(null);
 
-      const title = useScrambleText('Chaos Typewriter', { duration: 2500, interval: 40 });
+      const title = { display: 'Chaos Typewriter', done: true };
 
       // Shared state ref for p5
       const gameStateRef = useRef({
         started: false,
-        nodes: new Array(NUM_STEPS).fill(false),
+        nodes: Array.from({ length: TOTAL_COLS }, () => new Array(GRID_ROWS).fill(false)),
         chaosLevel: 0,
         currentStep: -1,
         lastStepTime: 0,
@@ -1267,10 +1341,6 @@ Rules:
         gameStateRef.current.currentGuessResult = guessResult;
       }, [started, nodes, chaosLevel, breatheActive, currentInput, guessResult]);
 
-      // Sync music vibe
-      useEffect(() => {
-        if (started) AudioEngine.setVibe(musicVibe);
-      }, [musicVibe, started]);
 
       // Initialize p5
       useEffect(() => {
@@ -1287,21 +1357,21 @@ Rules:
 
       // Node click callback
       useEffect(() => {
-        callbacksRef.current.onNodeClick = (index) => {
+        callbacksRef.current.onNodeClick = (col, row) => {
           setNodes(prev => {
-            const next = [...prev];
-            next[index] = false;
+            const next = prev.map(c => [...c]);
+            next[col][row] = false;
             return next;
           });
-          silencedAtRef.current[index] = Date.now();
+          silencedAtRef.current[`${col},${row}`] = Date.now();
         };
       }, []);
 
 
       // Calculate chaos
       useEffect(() => {
-        const activeCount = nodes.filter(Boolean).length;
-        const target = activeCount / NUM_STEPS;
+        const activeCount = nodes.flat().filter(Boolean).length;
+        const target = activeCount / TOTAL_CELLS;
         const interval = setInterval(() => {
           setChaosLevel(prev => prev + (target - prev) * 0.05);
         }, 50);
@@ -1311,9 +1381,8 @@ Rules:
       // Advance hint level at chaos thresholds (50% → hint 2, 75% → hint 3)
       useEffect(() => {
         if (wordPhase !== 'playing' || hints.length === 0) return;
-        const nonWordActive = nodes.filter((a, i) => a && !WORD_SLOTS.includes(i)).length;
-        const maxNW = NUM_STEPS - WORD_SLOTS.length;
-        const chaosPercent = nonWordActive / maxNW * 100;
+        const activeCount = nodes.flat().filter(Boolean).length;
+        const chaosPercent = activeCount / TOTAL_CELLS * 100;
         if (chaosPercent >= 75 && hints.length >= 3) {
           setHintLevel(2);
         } else if (chaosPercent >= 50 && hints.length >= 2) {
@@ -1323,26 +1392,31 @@ Rules:
 
       // Auto-activate nodes — only when actively playing a word
       useEffect(() => {
-        if (!started || showGameOver || wordPhase !== 'playing') return;
+        if (!started || showGameOver || showCongrats || wordPhase !== 'playing') return;
         const diff = DIFFICULTY[difficulty];
         const initialDelay = guessCount === 0 ? diff.graceDelay : 0;
         const startTimer = setTimeout(() => {
           const tick = () => {
-            const delay = Math.max(diff.activateMin, diff.activateBase - wordsCompleted * diff.activateScale);
             autoActivateTimerRef.current = setTimeout(() => {
               setNodes(prev => {
                 const inactive = [];
-                prev.forEach((active, i) => {
-                  if (!active && !WORD_SLOTS.includes(i)) inactive.push(i);
-                });
+                for (let c = 0; c < TOTAL_COLS; c++) {
+                  for (let r = 0; r < GRID_ROWS; r++) {
+                    if (!prev[c][r]) inactive.push([c, r]);
+                  }
+                }
                 if (inactive.length === 0) return prev;
-                const target = inactive[Math.floor(Math.random() * inactive.length)];
-                const next = [...prev];
-                next[target] = true;
+                const next = prev.map(c => [...c]);
+                for (let i = 0; i < diff.batchSize && inactive.length > 0; i++) {
+                  const idx = Math.floor(Math.random() * inactive.length);
+                  const [tc, tr] = inactive[idx];
+                  next[tc][tr] = true;
+                  inactive.splice(idx, 1);
+                }
                 return next;
               });
               tick();
-            }, delay);
+            }, diff.activateInterval);
           };
           tick();
         }, initialDelay);
@@ -1350,26 +1424,28 @@ Rules:
           clearTimeout(startTimer);
           clearTimeout(autoActivateTimerRef.current);
         };
-      }, [started, wordsCompleted, showGameOver, wordPhase, guessCount, difficulty]);
+      }, [started, wordsCompleted, showGameOver, showCongrats, wordPhase, guessCount, difficulty]);
 
       // Creep-back for silenced nodes — only during active play
       useEffect(() => {
-        if (!started || showGameOver || wordPhase !== 'playing') return;
+        if (!started || showGameOver || showCongrats || wordPhase !== 'playing') return;
         creepBackTimerRef.current = setInterval(() => {
           const now = Date.now();
           setNodes(prev => {
-            const next = [...prev];
+            const next = prev.map(c => [...c]);
             let changed = false;
-            for (let i = 0; i < NUM_STEPS; i++) {
-              if (WORD_SLOTS.includes(i)) continue;
-              if (!next[i] && silencedAtRef.current[i]) {
-                const elapsed = now - silencedAtRef.current[i];
-                const cDiff = DIFFICULTY[difficulty];
-                const delay = cDiff.creepDelay + Math.random() * cDiff.creepRand;
-                if (elapsed > delay && Math.random() < cDiff.creepProb) {
-                  next[i] = true;
-                  delete silencedAtRef.current[i];
-                  changed = true;
+            for (let col = 0; col < TOTAL_COLS; col++) {
+              for (let row = 0; row < GRID_ROWS; row++) {
+                const key = `${col},${row}`;
+                if (!next[col][row] && silencedAtRef.current[key]) {
+                  const elapsed = now - silencedAtRef.current[key];
+                  const cDiff = DIFFICULTY[difficulty];
+                  const delay = cDiff.creepDelay + Math.random() * cDiff.creepRand;
+                  if (elapsed > delay && Math.random() < cDiff.creepProb) {
+                    next[col][row] = true;
+                    delete silencedAtRef.current[key];
+                    changed = true;
+                  }
                 }
               }
             }
@@ -1377,7 +1453,7 @@ Rules:
           });
         }, 500);
         return () => clearInterval(creepBackTimerRef.current);
-      }, [started, showGameOver, wordPhase, difficulty]);
+      }, [started, showGameOver, showCongrats, wordPhase, difficulty]);
 
       // Keyboard fading — use setTimeout chain so chaos changes don't reset the timer
       const chaosRef = useRef(0);
@@ -1410,19 +1486,14 @@ Rules:
         };
       }, [wordPhase, fadePaused, answer, difficulty]);
 
-      // Game over check: all non-word-slot nodes active
+      // Game over check: 100% of cells active
       useEffect(() => {
-        if (!started || showGameOver) return;
-        const nonWordNodes = nodes.filter((active, i) => !WORD_SLOTS.includes(i));
-        const allActive = nonWordNodes.every(Boolean);
-        if (allActive && nonWordNodes.length > 0) {
-          // Give 3 seconds grace
+        if (!started || showGameOver || showCongrats) return;
+        const activeCount = nodes.flat().filter(Boolean).length;
+        if (activeCount >= TOTAL_CELLS) {
           const timer = setTimeout(() => {
-            const currentNonWord = [];
-            for (let i = 0; i < NUM_STEPS; i++) {
-              if (!WORD_SLOTS.includes(i)) currentNonWord.push(nodes[i]);
-            }
-            if (currentNonWord.every(Boolean)) {
+            const currentActive = nodes.flat().filter(Boolean).length;
+            if (currentActive >= TOTAL_CELLS) {
               setShowGameOver(true);
             }
           }, 3000);
@@ -1437,16 +1508,21 @@ Rules:
         setFadePaused(true);
         AudioEngine.setBreathe(true);
 
-        // Silence half the active non-word nodes
+        // Silence half the active cells
         setNodes(prev => {
-          const next = [...prev];
-          const activeIndices = [];
-          next.forEach((a, i) => { if (a && !WORD_SLOTS.includes(i)) activeIndices.push(i); });
-          const toCalm = Math.ceil(activeIndices.length / 2);
-          const shuffled = shuffleArray(activeIndices);
+          const next = prev.map(c => [...c]);
+          const activeCells = [];
+          for (let c = 0; c < TOTAL_COLS; c++) {
+            for (let r = 0; r < GRID_ROWS; r++) {
+              if (next[c][r]) activeCells.push([c, r]);
+            }
+          }
+          const toCalm = Math.ceil(activeCells.length / 2);
+          const shuffled = shuffleArray(activeCells);
           for (let i = 0; i < toCalm; i++) {
-            next[shuffled[i]] = false;
-            silencedAtRef.current[shuffled[i]] = Date.now();
+            const [c, r] = shuffled[i];
+            next[c][r] = false;
+            silencedAtRef.current[`${c},${r}`] = Date.now();
           }
           return next;
         });
@@ -1777,57 +1853,64 @@ Rules:
             setWordsCompleted(prev => prev + 1);
             setWordPhase('solved');
 
-            // Silence 3-5 nodes based on speed
-            const speedBonus = newGuessCount <= 2 ? 2 : newGuessCount <= 4 ? 1 : 0;
-            const toSilence = 3 + speedBonus;
-            setNodes(prev => {
-              const next = [...prev];
-              const activeIndices = [];
-              next.forEach((a, i) => { if (a && !WORD_SLOTS.includes(i)) activeIndices.push(i); });
-              const shuffled = shuffleArray(activeIndices);
-              for (let i = 0; i < Math.min(toSilence, shuffled.length); i++) {
-                next[shuffled[i]] = false;
-                silencedAtRef.current[shuffled[i]] = Date.now();
-              }
-              return next;
-            });
-
             setWordHistory(prev => [...prev, { word: answer, solved: true, score, guesses: newGuessCount }]);
             setHints([]);
             setHintLevel(0);
 
-            // Next word after a pause
+            // Check if all 6 words done
             setTimeout(() => {
               setGuessResult(null);
               setCurrentInput('');
-              fetchNextWord();
+              setWordsCompleted(prev => {
+                if (prev >= 6) {
+                  setShowCongrats(true);
+                  setWordPhase('idle');
+                  return prev;
+                }
+                fetchNextWord();
+                return prev;
+              });
             }, 1500);
 
           } else if (newGuessCount >= MAX_GUESSES) {
             // Failed
             setWordPhase('failed');
 
-            // Activate 2 more nodes
+            // Activate 4-6 more cells
             setNodes(prev => {
-              const next = [...prev];
-              const inactive = [];
-              next.forEach((a, i) => { if (!a && !WORD_SLOTS.includes(i)) inactive.push(i); });
-              const shuffled = shuffleArray(inactive);
-              for (let i = 0; i < Math.min(2, shuffled.length); i++) {
-                next[shuffled[i]] = true;
+              const next = prev.map(c => [...c]);
+              const inactiveCells = [];
+              for (let c = 0; c < TOTAL_COLS; c++) {
+                for (let r = 0; r < GRID_ROWS; r++) {
+                  if (!next[c][r]) inactiveCells.push([c, r]);
+                }
+              }
+              const shuffled = shuffleArray(inactiveCells);
+              for (let i = 0; i < Math.min(5, shuffled.length); i++) {
+                const [c, r] = shuffled[i];
+                next[c][r] = true;
               }
               return next;
             });
 
+            setWordsCompleted(prev => prev + 1);
             setWordHistory(prev => [...prev, { word: answer, solved: false, score: 0, guesses: newGuessCount }]);
             setHints([]);
             setHintLevel(0);
 
-            // Next word after a pause
+            // Check if all 6 words done
             setTimeout(() => {
               setGuessResult(null);
               setCurrentInput('');
-              fetchNextWord();
+              setWordsCompleted(prev => {
+                if (prev >= 6) {
+                  setShowCongrats(true);
+                  setWordPhase('idle');
+                  return prev;
+                }
+                fetchNextWord();
+                return prev;
+              });
             }, 2000);
 
           } else {
@@ -1863,10 +1946,8 @@ Rules:
             e.preventDefault();
             handleKey(key);
           }
-          // Spacebar for breathe
           if (e.key === ' ') {
             e.preventDefault();
-            triggerBreathe();
           }
         };
         window.addEventListener('keydown', handler);
@@ -1876,19 +1957,21 @@ Rules:
       // Start game
       const handleStart = useCallback(async () => {
         await AudioEngine.init();
-        AudioEngine.setVibe(musicVibe);
         setStarted(true);
         gameStateRef.current.lastStepTime = performance.now();
 
-        // Seed 3 random active nodes
-        const nonWord = [];
-        for (let i = 0; i < NUM_STEPS; i++) {
-          if (!WORD_SLOTS.includes(i)) nonWord.push(i);
-        }
-        const shuffled = shuffleArray(nonWord);
-        setNodes(prev => {
-          const next = [...prev];
-          for (let i = 0; i < 3; i++) next[shuffled[i]] = true;
+        // Seed 6 random active cells
+        setNodes(() => {
+          const next = Array.from({ length: TOTAL_COLS }, () => new Array(GRID_ROWS).fill(false));
+          const allCells = [];
+          for (let c = 0; c < TOTAL_COLS; c++) {
+            for (let r = 0; r < GRID_ROWS; r++) allCells.push([c, r]);
+          }
+          const shuffled = shuffleArray(allCells);
+          for (let i = 0; i < 6; i++) {
+            const [c, r] = shuffled[i];
+            next[c][r] = true;
+          }
           return next;
         });
 
@@ -1899,13 +1982,12 @@ Rules:
         }
 
         fetchNextWord();
-      }, [fetchNextWord, musicVibe]);
+      }, [fetchNextWord]);
 
       // Restart
       const handleRestart = useCallback(() => {
         setShowGameOver(false);
         setShowCongrats(false);
-        setNodes(new Array(NUM_STEPS).fill(false));
         setChaosLevel(0);
         setWordsCompleted(0);
         setTotalScore(0);
@@ -1915,22 +1997,26 @@ Rules:
         usedWordsRef.current = new Set();
         silencedAtRef.current = {};
 
-        const nonWord = [];
-        for (let i = 0; i < NUM_STEPS; i++) {
-          if (!WORD_SLOTS.includes(i)) nonWord.push(i);
-        }
-        const shuffled = shuffleArray(nonWord);
-        setNodes(prev => {
-          const next = new Array(NUM_STEPS).fill(false);
-          for (let i = 0; i < 3; i++) next[shuffled[i]] = true;
+        // Seed 6 random active cells
+        setNodes(() => {
+          const next = Array.from({ length: TOTAL_COLS }, () => new Array(GRID_ROWS).fill(false));
+          const allCells = [];
+          for (let c = 0; c < TOTAL_COLS; c++) {
+            for (let r = 0; r < GRID_ROWS; r++) allCells.push([c, r]);
+          }
+          const shuffled = shuffleArray(allCells);
+          for (let i = 0; i < 6; i++) {
+            const [c, r] = shuffled[i];
+            next[c][r] = true;
+          }
           return next;
         });
 
         fetchNextWord();
       }, [fetchNextWord]);
 
-      const activeCount = nodes.filter((a, i) => a && !WORD_SLOTS.includes(i)).length;
-      const maxNonWord = NUM_STEPS - WORD_SLOTS.length;
+      const activeCount = nodes.flat().filter(Boolean).length;
+      const maxNonWord = TOTAL_CELLS;
 
       return (
         <>
@@ -1958,22 +2044,7 @@ Rules:
               </div>
             </div>
             <div className="setup-row">
-              <label>Music</label>
-              <div className="difficulty-options">
-                {Object.entries(VIBES).map(([key, val]) => (
-                  <button
-                    key={key}
-                    className={`diff-btn ${musicVibe === key ? 'active' : ''}`}
-                    onClick={() => setMusicVibe(key)}
-                  >
-                    <span className="diff-label">{val.label}</span>
-                    <span className="diff-desc">{val.desc}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="setup-row">
-              <label>API Key</label>
+              <label>API Key <span style={{fontWeight:500, textTransform:'none', letterSpacing:0, color:'#b07cd8'}}>(optional)</span></label>
               <input
                 type="password"
                 placeholder="sk-ant-... (optional — uses fallback words without it)"
@@ -1984,51 +2055,69 @@ Rules:
           </div>
 
           <div className="header">
-            <h1>{title.display}</h1>
+            <h1><span className="title-chaos">Chaos</span> <span className="title-typewriter">Typewriter</span></h1>
             <p className="byline">Vibeshift BLR Combo</p>
           </div>
 
-          {/* Speech bubble hint — above sequencer */}
-          <div className="hint-bubble-wrap">
-            {hints.length > 0 && hints[hintLevel] ? (
-              <div className="hint-bubble">
-                <span className="hint-personality">{hints[hintLevel].personality}</span>
-                <span className="hint-text">{hints[hintLevel].text}</span>
-              </div>
-            ) : wordPhase === 'loading' ? (
-              <div className="hint-bubble waiting">
-                <span className="hint-waiting">thinking of a word...</span>
-              </div>
-            ) : wordPhase === 'solved' ? (
-              <div className="hint-bubble">
-                <span className="hint-waiting">nice! next word coming...</span>
-              </div>
-            ) : wordPhase === 'failed' ? (
-              <div className="hint-bubble">
-                <span className="hint-waiting">the word was {answer}... next one coming...</span>
-              </div>
-            ) : null}
-          </div>
-
-          <div id="sequencer-container" ref={sequencerRef}></div>
-
           <div className="game-area">
-            <div className="status-msg">
-              {wordPhase === 'playing' && `Guess ${guessCount + 1}/${MAX_GUESSES} \u2022 Score: ${totalScore} \u2022 Chaos: ${Math.round(activeCount / maxNonWord * 100)}%`}
-              {wordPhase === 'solved' && <span className="win">Solved!</span>}
-              {wordPhase === 'failed' && <span className="lose">The word was {answer}</span>}
-              {wordPhase === 'loading' && 'Your game master is thinking...'}
-              {wordPhase === 'waiting' && ''}
+            {/* Hint bubble + stats row */}
+            <div className="hint-stats-row">
+              <div className="hint-bubble-wrap">
+                {hints.length > 0 && hints[hintLevel] ? (
+                  <div className="hint-bubble">
+                    <img className="hint-icon" src={getAvatarSrc(currentPersonality)} alt="" />
+                    <div className="hint-content">
+                      <span className="hint-personality">{hints[hintLevel].personality}</span>
+                      <span className="hint-text">{hints[hintLevel].text}</span>
+                    </div>
+                  </div>
+                ) : wordPhase === 'loading' ? (
+                  <div className="hint-bubble waiting">
+                    <img className="hint-icon" src={getAvatarSrc(currentPersonality)} alt="" />
+                    <span className="hint-waiting">thinking of a word...</span>
+                  </div>
+                ) : wordPhase === 'solved' ? (
+                  <div className="hint-bubble">
+                    <img className="hint-icon" src={getAvatarSrc(currentPersonality)} alt="" />
+                    <div className="hint-content">
+                      <span className="hint-personality">{currentPersonality || 'Host'}</span>
+                      <span className="hint-text">nice! next word coming...</span>
+                    </div>
+                  </div>
+                ) : wordPhase === 'failed' ? (
+                  <div className="hint-bubble">
+                    <img className="hint-icon" src={getAvatarSrc(currentPersonality)} alt="" />
+                    <div className="hint-content">
+                      <span className="hint-personality">{currentPersonality || 'Host'}</span>
+                      <span className="hint-text">the word was {answer}... next one coming...</span>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+              <div className="game-stats">
+                <div><span className="stat-number">{wordsCompleted + 1}</span> of <span className="stat-number">6</span> <span className="stat-label">word</span></div>
+                <div><span className="stat-number">{totalScore}</span> <span className="stat-label">points</span></div>
+                <div><span className="stat-number">{Math.round(activeCount / maxNonWord * 100)}%</span> <span className="stat-label">chaos</span></div>
+              </div>
             </div>
 
-            <div className="breathe-hint">
-              {breatheActive ? 'breathing...' : breatheCooldown ? 'breathe recharging...' : 'press space to breathe'}
-            </div>
+            <div id="sequencer-container" ref={sequencerRef}></div>
 
             <div className="keyboard">
               {KB_ROWS.map((row, ri) => (
                 <div key={ri} className="kb-row">
                   {row.map(key => {
+                    if (key === 'BREATHE') {
+                      return (
+                        <button
+                          key={key}
+                          className={`key breathe-key${breatheActive ? ' correct' : breatheCooldown ? ' absent' : ''}`}
+                          onClick={() => triggerBreathe()}
+                        >
+                          BREATHE
+                        </button>
+                      );
+                    }
                     let cls = 'key';
                     if (key === 'ENTER' || key === 'BACK') cls += ' wide';
                     if (letterStates[key]) cls += ` ${letterStates[key]}`;
@@ -2050,10 +2139,12 @@ Rules:
 
           {/* Start Overlay */}
           {!started && (
-            <div className="start-overlay" onClick={handleStart}>
-              <div className="start-box" onClick={e => e.stopPropagation()}>
-                <h2>Chaos Typewriter</h2>
-                <p>The sequencer builds chaos. Solve words to push it back. The AI picks each word and taunts you in a different personality. How long can you survive?</p>
+            <div className="modal-overlay" onClick={handleStart}>
+              <div className="modal guide" onClick={e => e.stopPropagation()}>
+                <h2>How to Play</h2>
+                <p>1. Guess <strong>5-letter words</strong> to survive.</p>
+                <p>2. <strong>Cryptic hints</strong> will be provided by a different personality each round.</p>
+                <p>3. <strong>Game over</strong> when the grid is overwhelmed with chaos.</p>
                 <button className="btn" onClick={handleStart}>Click to begin</button>
               </div>
             </div>
@@ -2064,13 +2155,9 @@ Rules:
             <div className="modal-overlay" onClick={() => setShowGuide(false)}>
               <div className="modal guide" onClick={e => e.stopPropagation()}>
                 <h2>How to Play</h2>
-                <p>Guess <strong>5-letter words</strong> to survive. The sequencer nodes build chaos — solve words to silence them.</p>
-                <p>Your letters appear in the <strong>center 5 columns</strong> of the sequencer strip. Type and press Enter to guess.</p>
-                <div className="twist">
-                  <strong>The twist:</strong> Keyboard letters fade over time, nodes auto-activate and creep back, and the AI game master gives cryptic hints in a different personality each round.
-                </div>
-                <p><strong>Breathe</strong> (spacebar): Silences half the nodes and pauses fading. 30s cooldown.</p>
-                <p><strong>Game over</strong> when all sequencer nodes are active.</p>
+                <p>1. Guess <strong>5-letter words</strong> to survive.</p>
+                <p>2. <strong>Cryptic hints</strong> will be provided by a different personality each round.</p>
+                <p>3. <strong>Game over</strong> when the grid is overwhelmed with chaos.</p>
                 <button className="btn" onClick={() => setShowGuide(false)}>Got it</button>
               </div>
             </div>
@@ -2131,7 +2218,7 @@ Rules:
                 <div className="modal-icon">{'\uD83C\uDF89'}</div>
                 <h2>You Beat the Chaos!</h2>
                 <p style={{margin: '0.5rem 0 1rem', color: '#b07cd8', fontSize: '1rem'}}>
-                  All {FALLBACK_WORDS.length} words conquered
+                  All 6 words completed before chaos took over!
                 </p>
                 <div className="modal-stats">
                   <div className="modal-stat">
