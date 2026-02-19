@@ -490,6 +490,38 @@
       min-height: 100vh;
     }
 
+    @media (max-width: 600px) {
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem 0.75rem;
+      }
+
+      .nav-title {
+        order: 3;
+        flex-basis: 100%;
+        text-align: center;
+        min-width: 0;
+      }
+
+      .nav-controls {
+        margin-left: auto;
+      }
+
+      .nav-title h1 {
+        font-size: 1rem;
+      }
+
+      .nav-title .byline {
+        font-size: 0.65rem;
+      }
+
+      nav a,
+      .setup-toggle {
+        font-size: 0.8rem;
+      }
+    }
+
     @media (max-width: 480px) {
       .tile { width: 48px; height: 48px; font-size: 1.35rem; }
       .key { height: 44px; min-width: 28px; padding: 0 7px; font-size: 0.75rem; }

@@ -671,6 +671,35 @@
 
     .hidden { display: none !important; }
 
+    @media (max-width: 600px) {
+      .hint-stats-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.4rem;
+      }
+
+      .hint-bubble-wrap {
+        height: auto;
+      }
+
+      .hint-bubble {
+        height: auto;
+      }
+
+      .hint-bubble .hint-text {
+        white-space: normal;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+
+      .game-stats {
+        text-align: left;
+        padding-right: 0;
+      }
+    }
+
     @media (max-width: 480px) {
       .key { height: 44px; min-width: 28px; padding: 0 7px; font-size: 0.75rem; }
       .key.wide { min-width: 48px; }
@@ -1042,7 +1071,8 @@ Rules:
         const totalInterCellGaps = (TOTAL_COLS - NUM_LETTERS) * cellGap;
         const totalBlockGaps = (NUM_LETTERS - 1) * BLOCK_GAP;
         const availW = canvasW - 2 * MARGIN - totalInterCellGaps - totalBlockGaps;
-        cellSize = Math.floor(availW / TOTAL_COLS);
+        // Use fractional cell size so the grid fully fills the canvas width.
+        cellSize = availW / TOTAL_COLS;
         canvasH = GRID_ROWS * cellSize + (GRID_ROWS - 1) * cellGap + 2 * MARGIN;
       }
 
