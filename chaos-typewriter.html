@@ -200,6 +200,53 @@
       box-shadow: 0 0 0 3px rgba(192, 132, 224, 0.15);
     }
 
+    .setup-note {
+      margin-top: 0.4rem;
+      font-size: 0.72rem;
+      line-height: 1.4;
+      color: #9c6bc4;
+    }
+
+    .modal .api-row {
+      margin: 0.75rem 0 0.5rem;
+      text-align: left;
+    }
+
+    .modal .api-label {
+      display: block;
+      font-size: 0.7rem;
+      color: #9c6bc4;
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+    }
+
+    .modal .api-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.7);
+      border: 2px solid rgba(186, 140, 214, 0.3);
+      border-radius: 10px;
+      padding: 0.6rem 0.8rem;
+      color: #4a3f6b;
+      font-family: inherit;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .modal .api-input:focus {
+      border-color: #c084e0;
+      box-shadow: 0 0 0 3px rgba(192, 132, 224, 0.15);
+    }
+
+    .modal .api-note {
+      margin-top: 0.35rem;
+      font-size: 0.7rem;
+      line-height: 1.4;
+      color: #9c6bc4;
+    }
+
     .header {
       padding: 0.75rem 1.5rem 0.25rem;
       text-align: center;
@@ -266,7 +313,7 @@
       align-items: stretch;
       gap: 6px;
       max-width: 700px;
-      margin: 0 auto;
+      margin: 0.5rem auto;
       padding: 0.5rem 1rem;
       padding-bottom: env(safe-area-inset-bottom, 0.5rem);
       z-index: 10;
@@ -376,6 +423,19 @@
       border-right: 8px solid rgba(255, 255, 255, 0.55);
     }
 
+    .hint-bubble.missed {
+      background: rgba(220, 90, 110, 0.9);
+    }
+
+    .hint-bubble.missed::before {
+      border-right-color: rgba(220, 90, 110, 0.9);
+    }
+
+    .hint-bubble.missed .hint-personality,
+    .hint-bubble.missed .hint-text {
+      color: #ffffff;
+    }
+
     .hint-icon {
       position: absolute;
       left: -2.4rem;
@@ -388,6 +448,14 @@
 
     .hint-content {
       flex: 1;
+      min-width: 0;
+    }
+
+    .hint-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
       min-width: 0;
     }
 
@@ -406,9 +474,36 @@
       font-size: 0.85rem;
       font-weight: 500;
       line-height: 1.4;
-      white-space: nowrap;
+      white-space: normal;
       overflow: hidden;
-      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .hint-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      white-space: nowrap;
+      background: none;
+      border: none;
+      color: #b07cd8;
+      font-family: inherit;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .hint-action:hover {
+      color: #8e44ad;
+      text-decoration: underline;
     }
 
     .hint-bubble.waiting {
@@ -458,6 +553,29 @@
       justify-content: center;
       z-index: 100;
       animation: fade-in 0.3s ease;
+    }
+
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(40, 20, 60, 0.35);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 90;
+      animation: fade-in 0.2s ease;
+    }
+
+    .loading-box {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(200, 160, 220, 0.35);
+      border-radius: 16px;
+      padding: 1rem 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #7b40a8;
+      box-shadow: 0 8px 24px rgba(100, 60, 140, 0.15);
     }
 
     @keyframes fade-in {
@@ -872,25 +990,37 @@
     const TOTAL_CELLS = TOTAL_COLS * GRID_ROWS; // 1100
     const BLOCK_GAP = 12; // px gap between letter blocks
     const MAX_GUESSES = 6;
+    const HINT_PENALTY = 100; // per extra hint used beyond the first
+    const WORD_BATCH_SIZE = 6;
+    const RECENT_WORD_LIMIT = 15;
 
     // Personality avatar images
     const PERSONALITY_AVATARS = {
-      'librarian':   'public/bored-librarian.png',
-      'lighthouse':  'public/Grumpy-Lighthouse-Keeper.png',
-      'pigeon':      'public/confused-pigeon.png',
-      'cactus':      'public/Philosophical-Cactus.png',
+      'mysterious oracle': 'public/mysterious-oracle.png',
+      'bored librarian': 'public/bored-librarian.png',
+      'excitable squirrel': 'public/excitable-squirrel.png',
+      'grumpy lighthouse keeper': 'public/Grumpy-Lighthouse-Keeper.png',
+      'time traveling barista': 'public/time-traveling-barista.png',
+      'time travelling barista': 'public/time-traveling-barista.png',
+      'philosophical cactus': 'public/Philosophical-Cactus.png',
+      'overly dramatic narrator': 'public/overly-dramatic-narrator.png',
+      'confused pigeon': 'public/confused-pigeon.png',
+      'sarcastic fortune cookie': 'public/sarcastic-fortune-cookie.png',
     };
     const AVATAR_KEYS = Object.keys(PERSONALITY_AVATARS);
 
+    function normalizePersonalityName(name) {
+      return name.toLowerCase().replace(/[^a-z]+/g, ' ').trim();
+    }
+
     function getAvatarSrc(personality) {
-      if (!personality) return PERSONALITY_AVATARS['pigeon'];
-      const lower = personality.toLowerCase();
+      if (!personality) return PERSONALITY_AVATARS['confused pigeon'];
+      const normalized = normalizePersonalityName(personality);
+      if (PERSONALITY_AVATARS[normalized]) return PERSONALITY_AVATARS[normalized];
       for (const key of AVATAR_KEYS) {
-        if (lower.includes(key)) return PERSONALITY_AVATARS[key];
+        if (normalized.includes(key)) return PERSONALITY_AVATARS[key];
       }
-      // Consistent random pick based on personality string
-      const hash = personality.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-      return Object.values(PERSONALITY_AVATARS)[hash % AVATAR_KEYS.length];
+      return PERSONALITY_AVATARS['confused pigeon'];
     }
 
     // Helpers
@@ -961,12 +1091,16 @@
       'RAVEN', 'SPINE', 'TORCH', 'VAULT',
     ];
 
-    const WORD_GEN_PROMPT = `You are the host of Chaos Typewriter, a word-guessing survival game. You have extreme multiple personality disorder. For each word, adopt a COMPLETELY DIFFERENT personality (be creative and unpredictable — surrealist poet, paranoid pigeon theorist, Victorian ghost, condescending alien, dramatic soap opera narrator, medieval knight speaking corporate jargon, etc).
+    const FALLBACK_PERSONALITIES = [
+      'Mysterious Oracle', 'Bored Librarian', 'Excitable Squirrel',
+      'Grumpy Lighthouse Keeper', 'Time-Traveling Barista', 'Philosophical Cactus',
+      'Overly Dramatic Narrator', 'Confused Pigeon', 'Sarcastic Fortune Cookie',
+    ];
 
-Your job: pick a common 5-letter English word and introduce it with a HELPFUL hint in character.
+    const WORD_GEN_PROMPT = `You are the host of Chaos Typewriter, a word-guessing survival game.
+You will be given a personality name. Write all hints in that personality's voice.
 
 Format your response EXACTLY as:
-[Personality Name]
 WORD: XXXXX
 HINT1: a vague, cryptic clue (category or mood)
 HINT2: a clearer clue (strong association or defining trait)
@@ -976,10 +1110,11 @@ Rules:
 - The word must be a common English word, all letters A-Z, exactly 5 letters
 - HINT1 should be vague but in the right direction (e.g. "Something elemental, something warm")
 - HINT2 should be clearly helpful (e.g. "You'd find this dancing in a fireplace")
-- HINT3 should nearly give it away (e.g. "Rhymes with BLAME, starts with F")
-- Deliver ALL hints through your personality's warped lens — be funny AND useful
-- Stay fully in character
-- NEVER repeat a personality`;
+- HINT3 should nearly give it away and MUST include the first letter explicitly (e.g. "Starts with F")
+- Each hint must be 10 words or fewer AND 60 characters max (including spaces/punctuation)
+- Deliver ALL hints through the provided personality's warped lens — be funny AND useful
+- Avoid misleading or incorrect specifics (no wrong shapes, materials, or categories)
+- Do NOT include the personality name or any extra text`;
 
     const REACT_PROMPT = `You are the host of Chaos Typewriter. You are currently playing a character. React to the player's guess in 1 short sentence (max 15 words), staying fully in character. Be funny and weird.`;
 
@@ -1028,6 +1163,100 @@ Rules:
       const available = FALLBACK_WORDS.filter(w => !exclude.has(w));
       if (available.length === 0) return null;
       return available[Math.floor(Math.random() * available.length)];
+    }
+
+    function parseWordReply(reply) {
+      if (!reply) return null;
+      const wordMatch = reply.match(/WORD:\s*([A-Z]{5})/i);
+      const word = wordMatch ? wordMatch[1].toUpperCase() : null;
+      if (!word || !/^[A-Z]{5}$/.test(word)) return null;
+      const h1 = reply.match(/HINT1:\s*(.+)/i);
+      const h2 = reply.match(/HINT2:\s*(.+)/i);
+      const h3 = reply.match(/HINT3:\s*(.+)/i);
+      return {
+        word,
+        hint1: h1 ? h1[1].trim() : null,
+        hint2: h2 ? h2[1].trim() : null,
+        hint3: h3 ? h3[1].trim() : null,
+      };
+    }
+
+    function limitHintWords(text, maxWords) {
+      if (!text) return text;
+      const cleaned = text.trim();
+      if (!cleaned) return cleaned;
+      let words = cleaned.split(/\s+/);
+      if (words.length <= maxWords) return cleaned;
+      words = words.slice(0, maxWords);
+
+      const stopwords = new Set([
+        'the','a','an','and','or','but','no','to','of','in','on','for','with',
+        'that','this','these','those','my','your','their','our','its','me','you',
+        'i','at','from','as','by','is','are','was','were'
+      ]);
+      const strip = (w) => w.replace(/[^a-z]/gi, '').toLowerCase();
+      const stripEnd = (w) => w.replace(/[.,;:!?]+$/g, '');
+
+      while (words.length > 0) {
+        const last = strip(words[words.length - 1]);
+        const prev = strip(words[words.length - 2] || '');
+        if (last === 'matter' && prev === 'no') {
+          words.pop();
+          words.pop();
+          continue;
+        }
+        if (stopwords.has(last)) {
+          words.pop();
+          continue;
+        }
+        break;
+      }
+
+      if (words.length === 0) {
+        return cleaned.split(/\s+/).slice(0, maxWords).join(' ');
+      }
+
+      let result = words.join(' ');
+      result = stripEnd(result);
+      return result;
+    }
+
+    function limitHintChars(text, maxChars) {
+      if (!text) return text;
+      const cleaned = text.trim();
+      if (cleaned.length <= maxChars) return cleaned;
+      const cut = cleaned.slice(0, maxChars);
+      return cut.replace(/[.,;:!?]+$/g, '').trim();
+    }
+
+    function loadRecentWords() {
+      try {
+        const raw = localStorage.getItem('chaos-typewriter-recent-words');
+        if (!raw) return [];
+        const list = JSON.parse(raw);
+        return Array.isArray(list) ? list.filter(w => typeof w === 'string') : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveRecentWords(words) {
+      try {
+        localStorage.setItem('chaos-typewriter-recent-words', JSON.stringify(words));
+      } catch {}
+    }
+
+    function rememberWord(word, ref) {
+      if (!word || !ref) return;
+      const upper = word.toUpperCase();
+      const next = [upper, ...ref.current.filter(w => w !== upper)].slice(0, RECENT_WORD_LIMIT);
+      ref.current = next;
+      saveRecentWords(next);
+    }
+
+    function pickGamePersonalities() {
+      const pool = shuffleArray(FALLBACK_PERSONALITIES);
+      return pool.slice(0, Math.min(WORD_BATCH_SIZE, pool.length));
     }
 
     // ── p5 Sequencer Sketch (instance mode) ──────────────────────
@@ -1244,7 +1473,7 @@ Rules:
     // ── Main App ─────────────────────────────────────────────────
 
     const DIFFICULTY = {
-      chill: {
+      /* chill: {
         label: 'Chill', desc: 'No time pressure',
         fadeMin: 8000, fadeMax: 12000, fadeChaosScale: 0.2,
         activateInterval: 8000, batchSize: 10,
@@ -1257,7 +1486,7 @@ Rules:
         activateInterval: 4000, batchSize: 40,
         creepDelay: 6000, creepRand: 8000, creepProb: 0.015,
         graceDelay: 8000,
-      },
+      }, */
       chaos: {
         label: 'Chaos', desc: 'Good luck',
         fadeMin: 1500, fadeMax: 4000, fadeChaosScale: 0.6,
@@ -1270,8 +1499,9 @@ Rules:
     function App() {
       const [setupOpen, setSetupOpen] = useState(false);
       const [apiKey, setApiKey] = useState('');
-      const [difficulty, setDifficulty] = useState('normal');
+      const difficulty = 'chaos';
       const [started, setStarted] = useState(false);
+      const [apiLoading, setApiLoading] = useState(false);
       const [showGuide, setShowGuide] = useState(false);
       const [showGameOver, setShowGameOver] = useState(false);
       const [showCongrats, setShowCongrats] = useState(false);
@@ -1299,9 +1529,11 @@ Rules:
 
       // Scoring
       const [wordsCompleted, setWordsCompleted] = useState(0);
+      const [wordsSolved, setWordsSolved] = useState(0);
       const [totalScore, setTotalScore] = useState(0);
       const [wordStartTime, setWordStartTime] = useState(0);
       const [wordHistory, setWordHistory] = useState([]); // [{word, solved, score, guesses}]
+      const [hintsUsed, setHintsUsed] = useState(0);
 
       // Refs
       const sequencerRef = useRef(null);
@@ -1313,7 +1545,14 @@ Rules:
       const autoActivateTimerRef = useRef(null);
       const creepBackTimerRef = useRef(null);
       const silencedAtRef = useRef({});
-      const abortRef = useRef(null);
+      const wordQueueRef = useRef([]);
+      const reservedWordsRef = useRef(new Set());
+      const queueLoadingRef = useRef(false);
+      const apiAvailableRef = useRef(true);
+      const gamePersonalitiesRef = useRef([]);
+      const wordIndexRef = useRef(0);
+      const prevApiKeyRef = useRef('');
+      const recentWordsRef = useRef(loadRecentWords());
 
       const title = { display: 'Chaos Typewriter', done: true };
 
@@ -1332,6 +1571,27 @@ Rules:
       const callbacksRef = useRef({
         onNodeClick: () => {},
       });
+
+      const getGamePersonality = (index) => {
+        const list = gamePersonalitiesRef.current;
+        if (!list || list.length === 0) {
+          return FALLBACK_PERSONALITIES[0] || 'Mystery Host';
+        }
+        return list[index % list.length];
+      };
+
+      const resetGamePersonalities = () => {
+        gamePersonalitiesRef.current = pickGamePersonalities();
+        wordIndexRef.current = 0;
+      };
+
+      useEffect(() => {
+        wordQueueRef.current = [];
+        reservedWordsRef.current = new Set();
+        queueLoadingRef.current = false;
+        apiAvailableRef.current = true;
+        recentWordsRef.current = loadRecentWords();
+      }, [apiKey]);
 
       // Sync state to ref for p5
       useEffect(() => {
@@ -1379,18 +1639,6 @@ Rules:
         }, 50);
         return () => clearInterval(interval);
       }, [nodes]);
-
-      // Advance hint level at chaos thresholds (50% → hint 2, 75% → hint 3)
-      useEffect(() => {
-        if (wordPhase !== 'playing' || hints.length === 0) return;
-        const activeCount = nodes.flat().filter(Boolean).length;
-        const chaosPercent = activeCount / TOTAL_CELLS * 100;
-        if (chaosPercent >= 75 && hints.length >= 3) {
-          setHintLevel(2);
-        } else if (chaosPercent >= 50 && hints.length >= 2) {
-          setHintLevel(1);
-        }
-      }, [nodes, wordPhase, hints]);
 
       // Auto-activate nodes — only when actively playing a word
       useEffect(() => {
@@ -1493,15 +1741,10 @@ Rules:
         if (!started || showGameOver || showCongrats) return;
         const activeCount = nodes.flat().filter(Boolean).length;
         if (activeCount >= TOTAL_CELLS) {
-          const timer = setTimeout(() => {
-            const currentActive = nodes.flat().filter(Boolean).length;
-            if (currentActive >= TOTAL_CELLS) {
-              setShowGameOver(true);
-            }
-          }, 3000);
-          return () => clearTimeout(timer);
+          setShowGameOver(true);
+          setWordPhase('idle');
         }
-      }, [nodes, started, showGameOver]);
+      }, [nodes, started, showGameOver, showCongrats]);
 
       // Breathe mechanic
       const triggerBreathe = useCallback(() => {
@@ -1675,13 +1918,77 @@ Rules:
         ];
       }
 
-      const FALLBACK_PERSONALITIES = [
-        'Mysterious Oracle', 'Bored Librarian', 'Excitable Squirrel',
-        'Grumpy Lighthouse Keeper', 'Time-Traveling Barista', 'Philosophical Cactus',
-        'Overly Dramatic Narrator', 'Confused Pigeon', 'Sarcastic Fortune Cookie',
-      ];
+      const requestWordFromApi = useCallback(async (wordNumber, personalityName, reservedWords) => {
+        if (!apiKey) return null;
+        const prevWords = reservedWords && reservedWords.size > 0
+          ? Array.from(reservedWords).join(', ')
+          : 'none';
 
-      // Fetch word from AI
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true',
+          },
+          body: JSON.stringify({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 250,
+            system: WORD_GEN_PROMPT,
+            messages: [{ role: 'user', content: `PERSONALITY: ${personalityName}\nGive me word #${wordNumber}. Previous words used: ${prevWords}` }],
+          }),
+        });
+
+        if (!res.ok) throw new Error(`API ${res.status}`);
+        const data = await res.json();
+        const reply = data.content?.[0]?.text || '';
+        return parseWordReply(reply);
+      }, [apiKey]);
+
+      const prefetchApiWords = useCallback(async () => {
+        if (!apiKey || queueLoadingRef.current || !apiAvailableRef.current) return;
+        queueLoadingRef.current = true;
+
+        const reserved = new Set([
+          ...usedWordsRef.current,
+          ...reservedWordsRef.current,
+          ...recentWordsRef.current,
+          ...FALLBACK_WORDS,
+        ]);
+        const batch = [];
+        let attempts = 0;
+        const baseIndex = wordIndexRef.current + wordQueueRef.current.length;
+        let hadError = false;
+
+        while (batch.length < WORD_BATCH_SIZE && attempts < WORD_BATCH_SIZE * 2) {
+          try {
+            const personality = getGamePersonality(baseIndex + batch.length);
+            const wordNumber = baseIndex + batch.length + 1;
+            const result = await requestWordFromApi(wordNumber, personality, reserved);
+            attempts += 1;
+            if (!result || !result.word || reserved.has(result.word)) continue;
+            reserved.add(result.word);
+            reservedWordsRef.current.add(result.word);
+            batch.push({ ...result, personality });
+          } catch {
+            attempts += 1;
+            hadError = true;
+          }
+        }
+
+        if (batch.length > 0) {
+          wordQueueRef.current.push(...batch);
+        }
+        if (batch.length === 0 && hadError) {
+          apiAvailableRef.current = false;
+          wordQueueRef.current = [];
+          reservedWordsRef.current = new Set();
+        }
+        queueLoadingRef.current = false;
+      }, [apiKey, requestWordFromApi, getGamePersonality]);
+
+      // Fetch word from AI or fallback
       const fetchNextWord = useCallback(async () => {
         setWordPhase('loading');
         setCurrentInput('');
@@ -1690,71 +1997,66 @@ Rules:
         setFadedLetters(new Set());
         setGuessResult(null);
         fadeIndexRef.current = 0;
+        setHintsUsed(0);
 
-        let word, personality, hint1, hint2, hint3;
+        let word, hint1, hint2, hint3;
+        let queuedPersonality = null;
+        let isApiWord = false;
+        const basePersonality = getGamePersonality(wordIndexRef.current);
 
         if (apiKey) {
-          try {
-            if (abortRef.current) abortRef.current.abort();
-            const controller = new AbortController();
-            abortRef.current = controller;
-
-            const res = await fetch('https://api.anthropic.com/v1/messages', {
-              method: 'POST',
-              signal: controller.signal,
-              headers: {
-                'content-type': 'application/json',
-                'x-api-key': apiKey,
-                'anthropic-version': '2023-06-01',
-                'anthropic-dangerous-direct-browser-access': 'true',
-              },
-              body: JSON.stringify({
-                model: 'claude-haiku-4-5-20251001',
-                max_tokens: 250,
-                system: WORD_GEN_PROMPT,
-                messages: [{ role: 'user', content: `Give me word #${wordsCompleted + 1}. Previous words used: ${[...usedWordsRef.current].join(', ') || 'none'}` }],
-              }),
-            });
-
-            if (!res.ok) throw new Error(`API ${res.status}`);
-            const data = await res.json();
-            const reply = data.content?.[0]?.text || '';
-
-            // Parse response
-            const persMatch = reply.match(/^\[([^\]]+)\]/);
-            personality = persMatch ? persMatch[1] : 'Mystery Host';
-
-            const wordMatch = reply.match(/WORD:\s*([A-Z]{5})/i);
-            word = wordMatch ? wordMatch[1].toUpperCase() : null;
-
-            const h1 = reply.match(/HINT1:\s*(.+)/i);
-            const h2 = reply.match(/HINT2:\s*(.+)/i);
-            const h3 = reply.match(/HINT3:\s*(.+)/i);
-            hint1 = h1 ? h1[1].trim() : null;
-            hint2 = h2 ? h2[1].trim() : null;
-            hint3 = h3 ? h3[1].trim() : null;
-
-            if (!word || word.length !== 5 || !/^[A-Z]+$/.test(word)) {
-              throw new Error('Bad word from AI');
+          if (apiAvailableRef.current) {
+            if (wordQueueRef.current.length === 0) {
+              setApiLoading(true);
             }
-          } catch (e) {
-            if (e.name === 'AbortError') return;
-            word = null;
+            if (wordQueueRef.current.length === 0) {
+              await prefetchApiWords();
+            } else if (wordQueueRef.current.length < 2) {
+              prefetchApiWords();
+            }
+          }
+
+          const queued = wordQueueRef.current.shift();
+          if (queued) {
+            reservedWordsRef.current.delete(queued.word);
+            word = queued.word;
+            queuedPersonality = queued.personality || null;
+            isApiWord = true;
+            hint1 = queued.hint1;
+            hint2 = queued.hint2;
+            hint3 = queued.hint3;
+          } else if (apiKey) {
+            apiAvailableRef.current = false;
+            wordQueueRef.current = [];
+            reservedWordsRef.current = new Set();
           }
         }
 
-        // Fallback: pick a word and generate hints + random personality
+        const personality = queuedPersonality || basePersonality;
+
+        // Fallback: pick a word and generate hints
         if (!word) {
-          word = getRandomFallback(usedWordsRef.current);
+          const exclude = new Set([
+            ...usedWordsRef.current,
+            ...reservedWordsRef.current,
+            ...recentWordsRef.current,
+          ]);
+          word = getRandomFallback(exclude);
           if (!word) {
             // All fallback words exhausted — you win!
             setWordPhase('idle');
             setShowCongrats(true);
             if (audioRef.current) audioRef.current.stopAll();
+            setApiLoading(false);
             return;
           }
-          if (!personality) {
-            personality = FALLBACK_PERSONALITIES[Math.floor(Math.random() * FALLBACK_PERSONALITIES.length)];
+        }
+
+        if (word) {
+          if (isApiWord) {
+            hint1 = limitHintChars(limitHintWords(hint1, 10), 60);
+            hint2 = limitHintChars(limitHintWords(hint2, 10), 60);
+            hint3 = limitHintChars(limitHintWords(hint3, 10), 60);
           }
           const fb = generateFallbackHints(word);
           hint1 = hint1 || fb[0];
@@ -1763,6 +2065,7 @@ Rules:
         }
 
         usedWordsRef.current.add(word);
+        rememberWord(word, recentWordsRef);
         setAnswer(word);
         fadeQueueRef.current = buildFadeQueue(word);
         fadeIndexRef.current = 0;
@@ -1782,11 +2085,12 @@ Rules:
 
         setWordStartTime(Date.now());
         setWordPhase('playing');
-      }, [apiKey, wordsCompleted]);
+        setApiLoading(false);
+      }, [apiKey, prefetchApiWords, getGamePersonality]);
 
       // React to guess via AI
       const aiReactToGuess = useCallback(async (guess, wasCorrect) => {
-        if (!apiKey || !currentPersonality) return;
+        if (!apiKey || !currentPersonality || !apiAvailableRef.current) return;
         try {
           const res = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
@@ -1805,7 +2109,10 @@ Rules:
           });
           if (!res.ok) return;
           const data = await res.json();
-          const reply = (data.content?.[0]?.text || '').replace(/^\[.*?\]\s*/, '').trim();
+          const reply = limitHintChars(
+            limitHintWords((data.content?.[0]?.text || '').replace(/^\[.*?\]\s*/, '').trim(), 10),
+            60
+          );
           if (reply) {
             setHints(prev => {
               const next = [...prev];
@@ -1850,28 +2157,29 @@ Rules:
           if (isCorrect) {
             // Solved!
             const elapsed = (Date.now() - wordStartTime) / 1000;
-            const score = Math.max(0, 1000 - Math.floor(elapsed * 10) - (newGuessCount * 50));
+            const hintPenalty = hintsUsed * HINT_PENALTY;
+            const score = Math.max(0, 1000 - Math.floor(elapsed * 10) - (newGuessCount * 50) - hintPenalty);
+            const nextSolved = wordsSolved + 1;
             setTotalScore(prev => prev + score);
             setWordsCompleted(prev => prev + 1);
+            setWordsSolved(nextSolved);
             setWordPhase('solved');
 
             setWordHistory(prev => [...prev, { word: answer, solved: true, score, guesses: newGuessCount }]);
             setHints([]);
             setHintLevel(0);
 
-            // Check if all 6 words done
+            // Check if all 6 words solved
             setTimeout(() => {
               setGuessResult(null);
               setCurrentInput('');
-              setWordsCompleted(prev => {
-                if (prev >= 6) {
-                  setShowCongrats(true);
-                  setWordPhase('idle');
-                  return prev;
-                }
-                fetchNextWord();
-                return prev;
-              });
+              if (nextSolved >= 6) {
+                setShowCongrats(true);
+                setWordPhase('idle');
+                return;
+              }
+              wordIndexRef.current += 1;
+              fetchNextWord();
             }, 1500);
 
           } else if (newGuessCount >= MAX_GUESSES) {
@@ -1900,19 +2208,12 @@ Rules:
             setHints([]);
             setHintLevel(0);
 
-            // Check if all 6 words done
+            // Move to next word after brief pause
             setTimeout(() => {
               setGuessResult(null);
               setCurrentInput('');
-              setWordsCompleted(prev => {
-                if (prev >= 6) {
-                  setShowCongrats(true);
-                  setWordPhase('idle');
-                  return prev;
-                }
-                fetchNextWord();
-                return prev;
-              });
+              wordIndexRef.current += 1;
+              fetchNextWord();
             }, 2000);
 
           } else {
@@ -1923,7 +2224,7 @@ Rules:
             }, 800);
           }
         }, 600);
-      }, [currentInput, wordPhase, answer, guessCount, aiReactToGuess, fetchNextWord, wordStartTime]);
+      }, [currentInput, wordPhase, answer, guessCount, aiReactToGuess, fetchNextWord, wordStartTime, hintsUsed, wordsSolved]);
 
       // Handle key
       const handleKey = useCallback((key) => {
@@ -1943,6 +2244,10 @@ Rules:
       useEffect(() => {
         const handler = (e) => {
           if (e.ctrlKey || e.metaKey || e.altKey) return;
+          const target = e.target;
+          if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+            return;
+          }
           const key = e.key.toUpperCase();
           if (key === 'ENTER' || key === 'BACKSPACE' || (/^[A-Z]$/.test(key) && key.length === 1)) {
             e.preventDefault();
@@ -1961,6 +2266,14 @@ Rules:
         await AudioEngine.init();
         setStarted(true);
         gameStateRef.current.lastStepTime = performance.now();
+        resetGamePersonalities();
+        wordQueueRef.current = [];
+        reservedWordsRef.current = new Set();
+        queueLoadingRef.current = false;
+        apiAvailableRef.current = true;
+        if (apiKey) {
+          setApiLoading(true);
+        }
 
         // Seed 6 random active cells
         setNodes(() => {
@@ -1977,14 +2290,13 @@ Rules:
           return next;
         });
 
-        // Show guide on first visit
+        // Mark guide as seen on first visit (start modal already explains basics)
         if (!localStorage.getItem('chaos-typewriter-guide-seen')) {
-          setShowGuide(true);
           localStorage.setItem('chaos-typewriter-guide-seen', '1');
         }
 
         fetchNextWord();
-      }, [fetchNextWord]);
+      }, [fetchNextWord, resetGamePersonalities]);
 
       // Restart
       const handleRestart = useCallback(() => {
@@ -1992,11 +2304,19 @@ Rules:
         setShowCongrats(false);
         setChaosLevel(0);
         setWordsCompleted(0);
+        setWordsSolved(0);
         setTotalScore(0);
         setWordHistory([]);
         setHints([]);
         setHintLevel(0);
+        setHintsUsed(0);
         usedWordsRef.current = new Set();
+        wordQueueRef.current = [];
+        reservedWordsRef.current = new Set();
+        queueLoadingRef.current = false;
+        apiAvailableRef.current = true;
+        resetGamePersonalities();
+        recentWordsRef.current = loadRecentWords();
         silencedAtRef.current = {};
 
         // Seed 6 random active cells
@@ -2015,10 +2335,27 @@ Rules:
         });
 
         fetchNextWord();
-      }, [fetchNextWord]);
+      }, [fetchNextWord, resetGamePersonalities]);
+
+      useEffect(() => {
+        if (apiKey && apiKey !== prevApiKeyRef.current) {
+          if (started) {
+            setApiLoading(true);
+            handleRestart();
+          }
+        }
+        if (!apiKey) {
+          setApiLoading(false);
+        }
+        prevApiKeyRef.current = apiKey;
+      }, [apiKey, started, handleRestart]);
 
       const activeCount = nodes.flat().filter(Boolean).length;
       const maxNonWord = TOTAL_CELLS;
+      const chaosPercent = Math.round(activeCount / maxNonWord * 100);
+      const availableHintLevel = chaosPercent >= 75 ? 2 : chaosPercent >= 50 ? 1 : 0;
+      const maxHintLevel = hints.length ? Math.min(hints.length - 1, availableHintLevel) : 0;
+      const canRevealHint = wordPhase === 'playing' && hints.length > 0 && maxHintLevel > hintLevel;
 
       return (
         <>
@@ -2031,21 +2368,6 @@ Rules:
           </nav>
           <div className={`setup-panel ${setupOpen ? 'open' : ''}`}>
             <div className="setup-row">
-              <label>Difficulty</label>
-              <div className="difficulty-options">
-                {Object.entries(DIFFICULTY).map(([key, val]) => (
-                  <button
-                    key={key}
-                    className={`diff-btn ${difficulty === key ? 'active' : ''}`}
-                    onClick={() => setDifficulty(key)}
-                  >
-                    <span className="diff-label">{val.label}</span>
-                    <span className="diff-desc">{val.desc}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="setup-row">
               <label>API Key <span style={{fontWeight:500, textTransform:'none', letterSpacing:0, color:'#b07cd8'}}>(optional)</span></label>
               <input
                 type="password"
@@ -2053,8 +2375,15 @@ Rules:
                 value={apiKey}
                 onChange={e => setApiKey(e.target.value)}
               />
+              <p className="setup-note">Adding an API key fetches more words to play. Your key stays in your browser only.</p>
             </div>
           </div>
+
+          {apiLoading && (
+            <div className="loading-overlay">
+              <div className="loading-box">Fetching new words...</div>
+            </div>
+          )}
 
           <div className="header">
             <h1><span className="title-chaos">Chaos</span> <span className="title-typewriter">Typewriter</span></h1>
@@ -2069,7 +2398,25 @@ Rules:
                   <div className="hint-bubble">
                     <img className="hint-icon" src={getAvatarSrc(currentPersonality)} alt="" />
                     <div className="hint-content">
-                      <span className="hint-personality">{hints[hintLevel].personality}</span>
+                      <div className="hint-header">
+                        <span className="hint-personality">{hints[hintLevel].personality}</span>
+                        {canRevealHint && (
+                          <button
+                            className="hint-action"
+                            onClick={() => {
+                              setHintLevel(prev => {
+                                const next = Math.min(prev + 1, maxHintLevel);
+                                if (next !== prev) {
+                                  setHintsUsed(u => u + 1);
+                                }
+                                return next;
+                              });
+                            }}
+                          >
+                            New hint
+                          </button>
+                        )}
+                      </div>
                       <span className="hint-text">{hints[hintLevel].text}</span>
                     </div>
                   </div>
@@ -2087,19 +2434,19 @@ Rules:
                     </div>
                   </div>
                 ) : wordPhase === 'failed' ? (
-                  <div className="hint-bubble">
+                  <div className="hint-bubble missed">
                     <img className="hint-icon" src={getAvatarSrc(currentPersonality)} alt="" />
                     <div className="hint-content">
                       <span className="hint-personality">{currentPersonality || 'Host'}</span>
-                      <span className="hint-text">the word was {answer}... next one coming...</span>
+                      <span className="hint-text">missed — the word was {answer}. next one coming...</span>
                     </div>
                   </div>
                 ) : null}
               </div>
               <div className="game-stats">
-                <div><span className="stat-number">{wordsCompleted + 1}</span> of <span className="stat-number">6</span> <span className="stat-label">word</span></div>
+                <div><span className="stat-number">{wordsSolved}</span> of <span className="stat-number">6</span> <span className="stat-label">solved</span></div>
                 <div><span className="stat-number">{totalScore}</span> <span className="stat-label">points</span></div>
-                <div><span className="stat-number">{Math.round(activeCount / maxNonWord * 100)}%</span> <span className="stat-label">chaos</span></div>
+                <div><span className="stat-number">{chaosPercent}%</span> <span className="stat-label">chaos</span></div>
               </div>
             </div>
 
@@ -2145,8 +2492,19 @@ Rules:
               <div className="modal guide" onClick={e => e.stopPropagation()}>
                 <h2>How to Play</h2>
                 <p>1. Guess <strong>5-letter words</strong> to survive.</p>
-                <p>2. <strong>Cryptic hints</strong> will be provided by a different personality each round.</p>
+                <p>2. <strong>Hints unlock</strong> at 50% and 75% chaos — tap "New hint" to reveal (extra hints reduce score).</p>
                 <p>3. <strong>Game over</strong> when the grid is overwhelmed with chaos.</p>
+                <div className="api-row">
+                  <label className="api-label">Add API Key (optional)</label>
+                  <input
+                    className="api-input"
+                    type="password"
+                    placeholder="sk-ant-... (optional — uses fallback words without it)"
+                    value={apiKey}
+                    onChange={e => setApiKey(e.target.value)}
+                  />
+                  <p className="api-note">Adding an API key fetches more words to play. Your key stays in your browser only.</p>
+                </div>
                 <button className="btn" onClick={handleStart}>Click to begin</button>
               </div>
             </div>
@@ -2158,7 +2516,7 @@ Rules:
               <div className="modal guide" onClick={e => e.stopPropagation()}>
                 <h2>How to Play</h2>
                 <p>1. Guess <strong>5-letter words</strong> to survive.</p>
-                <p>2. <strong>Cryptic hints</strong> will be provided by a different personality each round.</p>
+                <p>2. <strong>Hints unlock</strong> at 50% and 75% chaos — tap "New hint" to reveal (extra hints reduce score).</p>
                 <p>3. <strong>Game over</strong> when the grid is overwhelmed with chaos.</p>
                 <button className="btn" onClick={() => setShowGuide(false)}>Got it</button>
               </div>
@@ -2182,7 +2540,7 @@ Rules:
                     <span className="stat-label">Score</span>
                   </div>
                   <div className="modal-stat">
-                    <span className="stat-value">{wordsCompleted}</span>
+                    <span className="stat-value">{wordsSolved}</span>
                     <span className="stat-label">Solved</span>
                   </div>
                   <div className="modal-stat">
@@ -2214,7 +2572,7 @@ Rules:
           )}
 
           {/* Congrats — all words cleared */}
-          {showCongrats && (
+          {showCongrats && !showGameOver && (
             <div className="modal-overlay">
               <div className="modal">
                 <div className="modal-icon">{'\uD83C\uDF89'}</div>
@@ -2228,7 +2586,7 @@ Rules:
                     <span className="stat-label">Score</span>
                   </div>
                   <div className="modal-stat">
-                    <span className="stat-value">{wordsCompleted}</span>
+                    <span className="stat-value">{wordsSolved}</span>
                     <span className="stat-label">Solved</span>
                   </div>
                   <div className="modal-stat">
