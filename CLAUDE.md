@@ -24,3 +24,4 @@ Chaos Typewriter — a wordle-like game with a p5.js step-sequencer grid and Ton
 ## Preferences
 - True vanilla HTML/CSS/JS — no frameworks or compile steps
 - Keep it simple, avoid over-engineering
+- **Prompt to commit often** — after completing a meaningful chunk of work, proactively ask the user if they want to commit

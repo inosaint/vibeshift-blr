@@ -246,6 +246,38 @@
       flex-direction: column;
       min-height: 100vh;
     }
+
+    @media (max-width: 600px) {
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem 0.75rem;
+      }
+
+      .nav-title {
+        order: 3;
+        flex-basis: 100%;
+        text-align: center;
+        min-width: 0;
+      }
+
+      .nav-right {
+        margin-left: auto;
+      }
+
+      .nav-title h1 {
+        font-size: 1rem;
+      }
+
+      .nav-title .byline {
+        font-size: 0.65rem;
+      }
+
+      nav a,
+      .setup-toggle {
+        font-size: 0.8rem;
+      }
+    }
   </style>
 </head>
 <body>
